@@ -1,0 +1,6 @@
+export { default as Dashboard } from './Dashboard'
+export { default as Containers } from './Containers'
+export { default as Images } from './Images'
+export { default as Volumes } from './Volumes'
+export { default as Networks } from './Networks'
+export { default as Settings } from './Settings'

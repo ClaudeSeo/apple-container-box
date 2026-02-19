@@ -1,0 +1,35 @@
+appId: com.apple-container-box.app
+productName: apple-container-box
+copyright: Copyright © 2026
+
+directories:
+  buildResources: resources
+  output: release
+
+mac:
+  category: public.app-category.developer-tools
+  icon: resources/icon.icns
+  target:
+    - target: dmg
+      arch: [arm64]
+    - target: zip
+      arch: [arm64]
+  entitlements: null
+  entitlementsInherit: null
+
+dmg:
+  background: null
+  window:
+    width: 540
+    height: 380
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+
+files:
+  - "!**/.vscode/*"
+  - "!src/*"
+  - "!electron.vite.config.*"
+  - "!{.eslintignore,.eslintrc.cjs,.prettierrc,.gitignore}"
+  - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"

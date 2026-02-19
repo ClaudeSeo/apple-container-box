@@ -1,0 +1,142 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* shadcn/ui 기본 CSS 변수 */
+    --background: 240 20% 14%;
+    --foreground: 210 40% 98%;
+    --card: 240 18% 17%;
+    --card-foreground: 210 40% 98%;
+    --popover: 240 18% 17%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 239 84% 67%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 239 84% 67%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 240 25% 28%;
+    --input: 217 33% 17%;
+    --ring: 239 84% 67%;
+    --radius: 0.5rem;
+
+    /* 커스텀 앱 색상 변수 */
+    --background-hex: #1a1a2e;
+    --background-secondary: #16213e;
+    --foreground-hex: #e5e7eb;
+    --border-hex: #2d2d44;
+
+    /* 컨테이너 상태 색상 */
+    --status-running: #4ade80;
+    --status-stopped: #6b7280;
+    --status-error: #ef4444;
+    --status-paused: #f59e0b;
+    --status-restarting: #3b82f6;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    /* macOS 드래그 영역을 위한 기본 설정 */
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* 텍스트 선택 허용 영역 */
+  .selectable {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /* Electron 타이틀바 드래그 영역 */
+  .drag-region {
+    -webkit-app-region: drag;
+  }
+
+  .no-drag {
+    -webkit-app-region: no-drag;
+  }
+}
+
+/* 스크롤바 스타일링 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/50;
+}
+
+/* 선택 영역 스타일링 */
+::selection {
+  @apply bg-accent/30;
+}
+
+/* 포커스 아웃라인 스타일 */
+@layer utilities {
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  .focus-visible-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+}
+
+/* 상태 표시 도트 애니메이션 */
+@keyframes status-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.status-dot-animate {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+/* 터미널/로그 뷰어 스타일 */
+.terminal-container {
+  @apply font-mono text-sm bg-black/50 rounded-md;
+}
+
+.log-line {
+  @apply font-mono text-xs leading-relaxed whitespace-pre-wrap break-all;
+}
+
+/* 카드 hover 효과 */
+.card-interactive {
+  @apply transition-colors duration-150 hover:bg-surface-hover cursor-pointer;
+}
+
+/* 버튼 로딩 상태 */
+.btn-loading {
+  @apply relative pointer-events-none;
+}
+
+.btn-loading::after {
+  content: '';
+  @apply absolute inset-0 flex items-center justify-center;
+}
