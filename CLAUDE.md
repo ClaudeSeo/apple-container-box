@@ -80,7 +80,6 @@ src/
     components/  # UI components (containers/, images/, volumes/, networks/, dashboard/, layout/, common/, ui/)
     assets/      # Global CSS (Tailwind)
     lib/         # Shared utilities (cn helper, format, constants)
-__tests__/       # Test files (vitest) — currently empty; add tests here
 ```
 
 ### Key Contracts
@@ -135,8 +134,7 @@ Main Process exposes typed handlers via `ipcMain.handle()`. Renderer calls via t
 ## Test Strategy
 
 - **Framework**: vitest (configured via `vite.config.ts`)
-- **Location**: `__tests__/` directory at project root (currently no test files — add new tests here)
-- **Run a single test file**: `npx vitest run __tests__/your-file.test.ts`
+- **Run a single test file**: `npx vitest run <path-to-test-file>`
 - **Run tests matching a pattern**: `npx vitest run -t "test name pattern"`
 - Main Process logic (CLI adapter, validator, IPC handlers) should be unit-tested with mocked `child_process`.
 - The `ContainerCLIAdapter` interface enables easy mock substitution in tests.

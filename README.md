@@ -1,109 +1,134 @@
 # Apple Container Box
 
+> macOS-only GUI for the Apple Container CLI — a Docker Desktop alternative for Apple Silicon.
+
 ## Overview
 
-Apple Container Box is a macOS-only Electron desktop app for managing Apple containers through a GUI instead of raw terminal workflows. It targets Apple Silicon (arm64) on macOS 26+ and is positioned as a focused Docker Desktop alternative for the Apple Container ecosystem.
-
-The app keeps container execution in the Electron Main process, uses typed IPC contracts between processes, and validates user input before invoking the `container` CLI.
+Apple Container Box is an Electron desktop app that wraps the Apple Container CLI (`container`) in a keyboard-first command-center interface. It targets macOS 26+ on Apple Silicon (arm64) and keeps all container execution in the Electron Main process with typed IPC contracts and whitelist-validated CLI arguments.
 
 ## Features
 
-- Container lifecycle operations from a desktop command-center UI (list, run/start, inspect, stop, remove)
-- Dedicated management views for images, networks, and volumes
-- Live operational visibility with log streaming and container stats polling
-- Keyboard-first workflows via command palette support
-- Optional system tray integration for background usage
-- Persistent desktop settings through `electron-store`
-- Mock CLI mode for development when Apple Container CLI is unavailable
-
-## Apple Container CLI Integrations
-
-Apple Container Box integrates with Apple Container CLI through a strict adapter layer:
-
-- Real adapter executes the installed `container` binary with `child_process.spawn` argument arrays
-- Mock adapter provides in-memory responses for UI development and testing
-- Adapter factory chooses real or mock mode at startup
-- Whitelist validators sanitize names, image references, and mappings before command execution
-
-CLI binary resolution and fallback behavior:
-
-- Preferred binary paths: `/usr/local/bin/container` and `/opt/homebrew/bin/container`
-- If the CLI is missing at startup, the app automatically falls back to mock mode
-- Mock mode can be forced with `CONTAINER_BOX_MOCK=true`
-
-Realistic command surface used by the app includes operations such as:
-
-```bash
-# Containers
-container ls
-container run --name web nginx:latest
-container logs web
-container inspect web
-container stop web
-container rm web
-
-# Images
-container images ls
-container images inspect nginx:latest
-container images rm nginx:latest
-
-# System
-container system info
-```
+- **Command Center UI** — 3-pane resizable layout (Sidebar / Main Content / Detail Panel)
+- **Dashboard** — live cluster overview with charts and stats polling
+- **Container management** — list, run/start, inspect, stop, remove with log streaming
+- **Image management** — browse, inspect, pull progress, remove
+- **Volume & Network management** — dedicated views for each resource type
+- **Live terminal** — embedded xterm.js log viewer per container
+- **Command palette** — `⌘K` keyboard-driven search across containers, images, and actions
+- **System tray** — optional background tray icon with quick actions
+- **Persistent settings** — per-app preferences via `electron-store`
+- **Mock CLI mode** — full UI development without the Apple Container CLI installed
 
 ## Requirements
 
-- macOS 26 or later
-- Apple Silicon (arm64)
-- Node.js 20+
-- npm 10+
-- Apple Container CLI (`container`) for real runtime execution
+| Requirement         | Version               |
+| ------------------- | --------------------- |
+| macOS               | 26+                   |
+| Architecture        | Apple Silicon (arm64) |
+| Node.js             | 20+                   |
+| npm                 | 10+                   |
+| Apple Container CLI | 0.9.0+                |
 
-## Usage
+## Getting Started
 
 ```bash
 # Install dependencies
 npm install
 
-# Start development app (electron-vite)
+# Start development app (hot reload via electron-vite)
 npm run dev
 
-# Build production artifacts
-npm run build
+# Run in mock mode — no local container CLI required
+CONTAINER_BOX_MOCK=true npm run dev
+```
 
-# Package macOS app (.dmg / .zip, arm64)
-npm run package
+## Commands
 
-# Quality checks
-npm run typecheck
+```bash
+# Build
+npm run build         # Production build
+npm run package       # Package as macOS .dmg / .zip (arm64)
+
+# Type checking
+npm run typecheck     # Both node and web configs
 npm run typecheck:node
 npm run typecheck:web
-npm run lint
-npm run test
 
-# Run in forced mock mode (no local container CLI required)
-CONTAINER_BOX_MOCK=true npm run dev
+# Quality
+npm run lint          # ESLint with auto-fix
+npm run test          # Run vitest once
+npm run test:watch    # Vitest watch mode
 ```
 
 ## Architecture
 
-Process flow:
+### Process Model
 
 ```text
-Renderer (React UI)
-    <-> contextBridge (preload/index.ts)
+Renderer (React 19)
+    ↕  contextBridge  (preload/index.ts)
 Main Process (Node.js)
-    <-> child_process.spawn
-Apple Container CLI (container)
+    ↕  child_process.spawn
+Apple Container CLI (/usr/local/bin/container)
 ```
 
-Main-process internal flow (per domain):
+### Main Process — 3-Tier per Domain
 
 ```text
-IPC Handler -> Service -> CLI Adapter
+IPC Handler   (src/main/ipc/*.handler.ts)   ← input validation
+     ↓
+Service       (src/main/services/*.service.ts) ← business logic
+     ↓
+CLI Adapter   (src/main/cli/real-cli.adapter.ts)  ← spawn + parse
 ```
 
-- Typed IPC channels define invoke/request-response and push-event contracts
-- Electron security defaults are enforced: `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`
-- Renderer cannot access Node APIs directly; all privileged actions pass through preload + Main
-- Runtime behavior is centralized with shared constants and a settings store wrapper
+### Apple Container CLI Integration
+
+- **Real adapter** — executes `container` binary via argument arrays (no shell strings)
+- **Mock adapter** — in-memory responses for UI dev and unit tests
+- **Factory** — chooses real or mock at startup; falls back to mock if CLI is missing
+- **Validators** — `src/main/cli/validator.ts` whitelists names, image refs, port mappings before every call
+
+Binary resolution order: `/usr/local/bin/container` → `/opt/homebrew/bin/container` → mock fallback
+
+### CLI Commands Used
+
+```bash
+# Containers
+container ls
+container run --name <name> <image>
+container logs <name>
+container inspect <name>
+container stop <name>
+container rm <name>
+
+# Images
+container images ls
+container images inspect <ref>
+container images pull <ref>
+container images rm <ref>
+
+# Volumes
+container volumes ls
+container volumes inspect <name>
+container volumes rm <name>
+
+# Networks
+container networks ls
+container networks inspect <name>
+
+# System
+container system info
+```
+
+## Tech Stack
+
+| Layer         | Technology                            |
+| ------------- | ------------------------------------- |
+| App framework | Electron 40                           |
+| Build tool    | electron-vite 5                       |
+| UI framework  | React 19                              |
+| Language      | TypeScript 5 (strict)                 |
+| Styling       | Tailwind CSS 4 + shadcn/ui (Radix UI) |
+| State         | Zustand 5                             |
+| Terminal      | xterm.js 6                            |
