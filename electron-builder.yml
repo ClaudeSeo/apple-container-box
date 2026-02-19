@@ -27,6 +27,10 @@ nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
 
+extraResources:
+  - from: resources/tray-icon.png
+    to: resources/tray-icon.png
+
 files:
   - '!**/.vscode/*'
   - '!src/*'
