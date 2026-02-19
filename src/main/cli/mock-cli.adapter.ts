@@ -167,11 +167,12 @@ export class MockContainerCLI implements ContainerCLIAdapter {
   async runContainer(options: ContainerRunOptions): Promise<{ id: string }> {
     await this.delay(500)
     const id = this.generateId()
+    const status = options.start === false ? 'stopped' : 'running'
     const container: CLIContainer = {
       id,
       name: options.name || `container-${id.slice(0, 8)}`,
       image: options.image,
-      status: 'running',
+      status,
       createdAt: new Date().toISOString(),
       ports: (options.ports || []).map((p) => {
         const [host, container] = p.split(':')

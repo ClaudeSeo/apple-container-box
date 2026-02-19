@@ -20,6 +20,9 @@ release/
 # Claude Code local settings
 .claude/settings.local.json
 
+# Codex
+.omx/
+
 # OS
 .DS_Store
 Thumbs.db

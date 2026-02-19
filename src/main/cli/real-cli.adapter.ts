@@ -133,39 +133,54 @@ export class RealContainerCLI implements ContainerCLIAdapter {
     if (options.name) validateName(options.name, 'container')
     if (options.env) validateEnvVars(options.env)
 
-    const args = ['run']
-    if (options.detach !== false) args.push('-d')
-    if (options.rm) args.push('--rm')
-    if (options.name) args.push('--name', options.name)
-    if (options.network) args.push('--network', options.network)
+    const buildArgs = (subcommand: 'run' | 'create'): string[] => {
+      const args: string[] = [subcommand]
+      if (subcommand === 'run' && options.detach !== false) args.push('-d')
+      if (options.rm) args.push('--rm')
+      if (options.name) args.push('--name', options.name)
+      if (options.network) args.push('--network', options.network)
 
-    for (const port of options.ports || []) {
-      validatePortMapping(port)
-      args.push('-p', port)
+      for (const port of options.ports || []) {
+        validatePortMapping(port)
+        args.push('-p', port)
+      }
+
+      for (const vol of options.volumes || []) {
+        validateVolumeMount(vol)
+        args.push('-v', vol)
+      }
+
+      for (const [key, value] of Object.entries(options.env || {})) {
+        args.push('-e', `${key}=${value}`)
+      }
+
+      for (const [key, value] of Object.entries(options.labels || {})) {
+        args.push('--label', `${key}=${value}`)
+      }
+
+      args.push(options.image)
+      if (options.command) {
+        args.push(...options.command)
+      }
+
+      return args
     }
 
-    for (const vol of options.volumes || []) {
-      validateVolumeMount(vol)
-      args.push('-v', vol)
+    if (options.start === false) {
+      try {
+        const output = await this.exec(buildArgs('create'), CLI_TIMEOUT_LONG)
+        return { id: output.trim() }
+      } catch (error) {
+        log.warn('create command failed, falling back to run + stop', error)
+        const output = await this.exec(buildArgs('run'), CLI_TIMEOUT_LONG)
+        const id = output.trim()
+        await this.stopContainer(id)
+        return { id }
+      }
     }
 
-    for (const [key, value] of Object.entries(options.env || {})) {
-      args.push('-e', `${key}=${value}`)
-    }
-
-    for (const [key, value] of Object.entries(options.labels || {})) {
-      args.push('--label', `${key}=${value}`)
-    }
-
-    args.push(options.image)
-
-    if (options.command) {
-      args.push(...options.command)
-    }
-
-    const output = await this.exec(args, CLI_TIMEOUT_LONG)
-    const id = output.trim()
-    return { id }
+    const output = await this.exec(buildArgs('run'), CLI_TIMEOUT_LONG)
+    return { id: output.trim() }
   }
 
   async stopContainer(id: string, timeout?: number): Promise<void> {

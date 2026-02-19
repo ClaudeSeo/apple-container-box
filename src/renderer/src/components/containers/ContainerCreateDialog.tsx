@@ -14,40 +14,16 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { useContainerActions } from '@/hooks/useContainers'
 import { toast } from '@/hooks/use-toast'
-import type { ContainerRunOptions } from '@/types'
+import {
+  buildContainerRunOptions,
+  type EnvVarInput,
+  type PortMappingInput,
+  type VolumeMountInput
+} from './container-create.validation'
 
 interface ContainerCreateDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-}
-
-interface PortMapping {
-  hostPort: string
-  containerPort: string
-}
-
-interface EnvVar {
-  key: string
-  value: string
-}
-
-interface VolumeMount {
-  hostPath: string
-  containerPath: string
-}
-
-const MIN_PORT = 1
-const MAX_PORT = 65535
-
-function parsePort(value: string): number | null {
-  const trimmed = value.trim()
-  if (!trimmed) return null
-  if (!/^\d+$/.test(trimmed)) return null
-
-  const parsed = Number.parseInt(trimmed, 10)
-  if (!Number.isInteger(parsed)) return null
-  if (parsed < MIN_PORT || parsed > MAX_PORT) return null
-  return parsed
 }
 
 /**
@@ -62,9 +38,9 @@ export function ContainerCreateDialog({
   // 폼 상태
   const [image, setImage] = useState('')
   const [name, setName] = useState('')
-  const [ports, setPorts] = useState<PortMapping[]>([])
-  const [envVars, setEnvVars] = useState<EnvVar[]>([])
-  const [volumes, setVolumes] = useState<VolumeMount[]>([])
+  const [ports, setPorts] = useState<PortMappingInput[]>([])
+  const [envVars, setEnvVars] = useState<EnvVarInput[]>([])
+  const [volumes, setVolumes] = useState<VolumeMountInput[]>([])
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [autoStart, setAutoStart] = useState(true)
 
@@ -84,105 +60,26 @@ export function ContainerCreateDialog({
   }
 
   const handleSubmit = async (): Promise<void> => {
-    if (!image.trim()) return
+    const result = buildContainerRunOptions({
+      image,
+      name,
+      ports,
+      envVars,
+      volumes,
+      autoStart
+    })
 
-    const portMappings: string[] = []
-    const usedHostPorts = new Set<number>()
-
-    for (const [index, port] of ports.entries()) {
-      const hostRaw = port.hostPort.trim()
-      const containerRaw = port.containerPort.trim()
-      if (!hostRaw && !containerRaw) continue
-
-      if (!containerRaw) {
-        toast({
-          title: 'Invalid port mapping',
-          description: `Row ${index + 1}: Container port is required`,
-          variant: 'destructive'
-        })
-        return
-      }
-
-      const containerPort = parsePort(containerRaw)
-      if (!containerPort) {
-        toast({
-          title: 'Invalid port mapping',
-          description: `Row ${index + 1}: Container port must be 1-65535`,
-          variant: 'destructive'
-        })
-        return
-      }
-
-      const hostPort = hostRaw ? parsePort(hostRaw) : containerPort
-      if (!hostPort) {
-        toast({
-          title: 'Invalid port mapping',
-          description: `Row ${index + 1}: Host port must be 1-65535`,
-          variant: 'destructive'
-        })
-        return
-      }
-
-      if (usedHostPorts.has(hostPort)) {
-        toast({
-          title: 'Invalid port mapping',
-          description: `Row ${index + 1}: Duplicate host port ${hostPort}`,
-          variant: 'destructive'
-        })
-        return
-      }
-
-      usedHostPorts.add(hostPort)
-      portMappings.push(`${hostPort}:${containerPort}`)
-    }
-
-    const volumeMappings: string[] = []
-    for (const [index, volume] of volumes.entries()) {
-      const hostPath = volume.hostPath.trim()
-      const containerPath = volume.containerPath.trim()
-      if (!hostPath && !containerPath) continue
-
-      if (!hostPath || !containerPath) {
-        toast({
-          title: 'Invalid volume mapping',
-          description: `Row ${index + 1}: Host path and container path are both required`,
-          variant: 'destructive'
-        })
-        return
-      }
-
-      if (!containerPath.startsWith('/')) {
-        toast({
-          title: 'Invalid volume mapping',
-          description: `Row ${index + 1}: Container path must start with "/"`,
-          variant: 'destructive'
-        })
-        return
-      }
-
-      volumeMappings.push(`${hostPath}:${containerPath}`)
-    }
-
-    const options: ContainerRunOptions = {
-      image: image.trim(),
-      name: name.trim() || undefined,
-      ports: portMappings,
-      env: envVars.filter((e) => e.key).reduce(
-        (acc, e) => {
-          acc[e.key.trim()] = e.value
-          return acc
-        },
-        {} as Record<string, string>
-      ),
-      volumes: volumeMappings,
-      detach: true
+    if (!result.ok) {
+      toast({
+        title: result.error.title,
+        description: result.error.description,
+        variant: 'destructive'
+      })
+      return
     }
 
     try {
-      const containerId = await createContainer(options)
-      if (!autoStart) {
-        await window.electronAPI.containers.stop(containerId)
-      }
+      await createContainer(result.options)
       handleClose()
     } catch {
       // 에러는 useContainerActions에서 처리
@@ -192,7 +89,7 @@ export function ContainerCreateDialog({
   // 포트 추가/제거
   const addPort = (): void => setPorts([...ports, { hostPort: '', containerPort: '' }])
   const removePort = (index: number): void => setPorts(ports.filter((_, i) => i !== index))
-  const updatePort = (index: number, field: keyof PortMapping, value: string): void => {
+  const updatePort = (index: number, field: keyof PortMappingInput, value: string): void => {
     const newPorts = [...ports]
     newPorts[index][field] = value
     setPorts(newPorts)
@@ -201,7 +98,7 @@ export function ContainerCreateDialog({
   // 환경변수 추가/제거
   const addEnvVar = (): void => setEnvVars([...envVars, { key: '', value: '' }])
   const removeEnvVar = (index: number): void => setEnvVars(envVars.filter((_, i) => i !== index))
-  const updateEnvVar = (index: number, field: keyof EnvVar, value: string): void => {
+  const updateEnvVar = (index: number, field: keyof EnvVarInput, value: string): void => {
     const newEnvVars = [...envVars]
     newEnvVars[index][field] = value
     setEnvVars(newEnvVars)
@@ -210,7 +107,7 @@ export function ContainerCreateDialog({
   // 볼륨 추가/제거
   const addVolume = (): void => setVolumes([...volumes, { hostPath: '', containerPath: '' }])
   const removeVolume = (index: number): void => setVolumes(volumes.filter((_, i) => i !== index))
-  const updateVolume = (index: number, field: keyof VolumeMount, value: string): void => {
+  const updateVolume = (index: number, field: keyof VolumeMountInput, value: string): void => {
     const newVolumes = [...volumes]
     newVolumes[index][field] = value
     setVolumes(newVolumes)

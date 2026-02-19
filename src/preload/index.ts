@@ -25,6 +25,7 @@ const containersAPI = {
     labels?: Record<string, string>
     network?: string
     detach?: boolean
+    start?: boolean
     rm?: boolean
     command?: string[]
   }) => ipcRenderer.invoke('container:run', options),

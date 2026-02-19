@@ -90,6 +90,8 @@ export interface ContainerRunOptions {
   network?: string
   /** 백그라운드 실행 */
   detach?: boolean
+  /** 생성 후 자동 시작 여부 */
+  start?: boolean
   /** 컨테이너 종료 시 자동 삭제 */
   rm?: boolean
   /** 실행 명령어 */

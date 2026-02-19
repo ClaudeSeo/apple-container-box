@@ -34,6 +34,7 @@ export function registerContainerHandlers(): void {
         labels?: Record<string, string>
         network?: string
         detach?: boolean
+        start?: boolean
         rm?: boolean
         command?: string[]
       }

@@ -6,10 +6,10 @@ declare global {
     type Element = React.JSX.Element
     type IntrinsicElements = React.JSX.IntrinsicElements
     type IntrinsicAttributes = React.JSX.IntrinsicAttributes
-    interface ElementAttributesProperty extends React.JSX.ElementAttributesProperty {}
-    interface ElementChildrenAttribute extends React.JSX.ElementChildrenAttribute {}
+    type ElementAttributesProperty = React.JSX.ElementAttributesProperty
+    type ElementChildrenAttribute = React.JSX.ElementChildrenAttribute
     type LibraryManagedAttributes<C, P> = React.JSX.LibraryManagedAttributes<C, P>
-    interface IntrinsicClassAttributes<T> extends React.JSX.IntrinsicClassAttributes<T> {}
+    type IntrinsicClassAttributes<T> = React.JSX.IntrinsicClassAttributes<T>
   }
 }
 
@@ -20,10 +20,6 @@ interface ImportMetaEnv {
   readonly MODE: 'development' | 'production'
   readonly DEV: boolean
   readonly PROD: boolean
-}
-
-interface ImportMeta {
-  readonly env: ImportMetaEnv
 }
 
 /**
