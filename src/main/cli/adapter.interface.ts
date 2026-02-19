@@ -152,6 +152,7 @@ export interface ContainerCLIAdapter {
 
   // 시스템
   checkCLIAvailable(): Promise<boolean>
+  getCLIPath(): Promise<string | undefined>
   getCLIVersion(): Promise<string>
   getSystemInfo(): Promise<{
     runningContainers: number

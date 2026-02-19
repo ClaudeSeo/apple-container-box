@@ -1,10 +1,10 @@
-# Apple Container Box
+# Container Box
 
 > macOS-only GUI for the Apple Container CLI — a Docker Desktop alternative for Apple Silicon.
 
 ## Overview
 
-Apple Container Box is an Electron desktop app that wraps the Apple Container CLI (`container`) in a keyboard-first command-center interface. It targets macOS 26+ on Apple Silicon (arm64) and keeps all container execution in the Electron Main process with typed IPC contracts and whitelist-validated CLI arguments.
+Container Box is an Electron desktop app that wraps the Apple Container CLI (`container`) in a keyboard-first command-center interface. It targets macOS 26+ on Apple Silicon (arm64) and keeps all container execution in the Electron Main process with typed IPC contracts and whitelist-validated CLI arguments.
 
 ## Features
 

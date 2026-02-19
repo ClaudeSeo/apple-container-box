@@ -176,9 +176,17 @@ export function SettingsPage() {
                 </div>
                 {cliStatus?.path && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Version</span>
+                    <span className="text-sm font-medium">Path</span>
                     <span className="ml-4 text-right text-sm text-muted-foreground font-mono break-all">
                       {cliStatus.path}
+                    </span>
+                  </div>
+                )}
+                {cliStatus?.version && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Version</span>
+                    <span className="ml-4 text-right text-sm text-muted-foreground font-mono break-all">
+                      {cliStatus.version}
                     </span>
                   </div>
                 )}

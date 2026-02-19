@@ -396,6 +396,14 @@ export class RealContainerCLI implements ContainerCLIAdapter {
     }
   }
 
+  async getCLIPath(): Promise<string | undefined> {
+    try {
+      return await this.findCLIPath()
+    } catch {
+      return undefined
+    }
+  }
+
   async getCLIVersion(): Promise<string> {
     const output = await this.exec(['--version'])
     return output.trim()

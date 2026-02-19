@@ -77,7 +77,7 @@ export function ContainerCreateDialog({
       ports: ports
         .filter((p) => p.containerPort)
         .map((p) => {
-          const host = p.hostPort ? p.hostPort : '0'
+          const host = p.hostPort ? p.hostPort : p.containerPort
           return `${host}:${p.containerPort}`
         }),
       env: envVars.filter((e) => e.key).reduce(
@@ -94,7 +94,10 @@ export function ContainerCreateDialog({
     }
 
     try {
-      await createContainer(options)
+      const containerId = await createContainer(options)
+      if (!autoStart) {
+        await window.electronAPI.containers.stop(containerId)
+      }
       handleClose()
     } catch {
       // 에러는 useContainerActions에서 처리

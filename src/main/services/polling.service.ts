@@ -6,7 +6,7 @@
 import type { WebContents } from 'electron'
 import { createCLIAdapter, type ContainerCLIAdapter } from '../cli'
 import { logger } from '../utils/logger'
-import { POLLING_INTERVAL_CONTAINER, POLLING_INTERVAL_STATS } from '../utils/constants'
+import { POLLING_INTERVAL_STATS } from '../utils/constants'
 
 const log = logger.scope('PollingService')
 
@@ -17,8 +17,6 @@ interface StatsSubscription {
 
 class PollingService {
   private adapter: ContainerCLIAdapter | null = null
-  private containerPollingTimer: NodeJS.Timeout | null = null
-  private containerPollingWebContents: WebContents | null = null
   private statsSubscriptions = new Map<string, StatsSubscription>()
 
   resetAdapter(): void {
@@ -30,55 +28,6 @@ class PollingService {
       this.adapter = await createCLIAdapter()
     }
     return this.adapter
-  }
-
-  /**
-   * 컨테이너 목록 폴링 시작
-   */
-  startContainerPolling(webContents: WebContents): void {
-    // 기존 폴링 중지
-    this.stopContainerPolling()
-
-    log.info('Starting container polling', { interval: POLLING_INTERVAL_CONTAINER })
-    this.containerPollingWebContents = webContents
-
-    // 즉시 한 번 실행
-    this.pollContainers()
-
-    // 주기적 폴링
-    this.containerPollingTimer = setInterval(() => {
-      this.pollContainers()
-    }, POLLING_INTERVAL_CONTAINER)
-  }
-
-  /**
-   * 컨테이너 목록 폴링 실행
-   */
-  private async pollContainers(): Promise<void> {
-    if (!this.containerPollingWebContents || this.containerPollingWebContents.isDestroyed()) {
-      this.stopContainerPolling()
-      return
-    }
-
-    try {
-      const adapter = await this.getAdapter()
-      const containers = await adapter.listContainers({ all: true })
-      this.containerPollingWebContents.send('containers:updated', containers)
-    } catch (error) {
-      log.error('Container polling failed', error)
-    }
-  }
-
-  /**
-   * 컨테이너 목록 폴링 중지
-   */
-  stopContainerPolling(): void {
-    if (this.containerPollingTimer) {
-      log.info('Stopping container polling')
-      clearInterval(this.containerPollingTimer)
-      this.containerPollingTimer = null
-      this.containerPollingWebContents = null
-    }
   }
 
   /**
@@ -154,7 +103,6 @@ class PollingService {
    */
   cleanup(): void {
     log.info('Cleaning up all polling')
-    this.stopContainerPolling()
     for (const containerId of this.statsSubscriptions.keys()) {
       this.stopStatsPolling(containerId)
     }

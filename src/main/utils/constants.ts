@@ -3,8 +3,8 @@
  */
 
 /** 앱 기본 정보 */
-export const APP_NAME = 'apple-container-box'
-export const APP_DISPLAY_NAME = 'Apple Container Box'
+export const APP_NAME = 'container-box'
+export const APP_DISPLAY_NAME = 'Container Box'
 
 /** CLI 바이너리 */
 export const CLI_BINARY = 'container'

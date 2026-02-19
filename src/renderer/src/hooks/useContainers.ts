@@ -106,7 +106,7 @@ export function useContainers() {
  * - start, stop, restart, remove 등
  */
 export function useContainerActions() {
-  const { updateContainer, removeContainer: removeFromStore } = useContainerStore()
+  const { updateContainer, removeContainer: removeFromStore, setContainers } = useContainerStore()
   const { setSelectedContainer } = useUIStore()
   const [loading, setLoading] = useState(false)
 
@@ -196,6 +196,8 @@ export function useContainerActions() {
     setLoading(true)
     try {
       const result = await window.electronAPI.containers.run(options)
+      const updatedContainers = await window.electronAPI.containers.list({ all: true })
+      setContainers(updatedContainers)
       toast({
         title: 'Container created',
         description: `ID: ${result.id.slice(0, 12)}`,
@@ -212,7 +214,7 @@ export function useContainerActions() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [setContainers])
 
   return {
     startContainer,

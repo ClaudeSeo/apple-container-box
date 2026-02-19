@@ -30,6 +30,7 @@ class SystemService {
   async checkCLI(): Promise<{
     available: boolean
     path?: string
+    version?: string
     error?: string
     isMock?: boolean
   }> {
@@ -39,10 +40,12 @@ class SystemService {
       const available = await adapter.checkCLIAvailable()
 
       if (available) {
+        const path = await adapter.getCLIPath()
         const version = await adapter.getCLIVersion()
         return {
           available: true,
-          path: version,
+          path,
+          version,
           isMock: isMockMode()
         }
       }

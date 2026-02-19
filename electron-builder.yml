@@ -1,5 +1,5 @@
-appId: com.apple-container-box.app
-productName: apple-container-box
+appId: com.containerbox.app
+productName: Container Box
 copyright: Copyright © 2026
 
 directories:
@@ -28,8 +28,8 @@ nsis:
   allowToChangeInstallationDirectory: true
 
 files:
-  - "!**/.vscode/*"
-  - "!src/*"
-  - "!electron.vite.config.*"
-  - "!{.eslintignore,.eslintrc.cjs,.prettierrc,.gitignore}"
-  - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.*'
+  - '!{.eslintignore,.eslintrc.cjs,.prettierrc,.gitignore}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'

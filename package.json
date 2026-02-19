@@ -1,5 +1,6 @@
 {
-  "name": "apple-container-box",
+  "name": "container-box",
+  "productName": "Container Box",
   "version": "0.0.1",
   "description": "macOS desktop app for Apple Container management",
   "main": "./out/main/index.js",

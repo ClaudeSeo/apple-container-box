@@ -381,6 +381,10 @@ export class MockContainerCLI implements ContainerCLIAdapter {
     return true
   }
 
+  async getCLIPath(): Promise<string | undefined> {
+    return '/usr/local/bin/container (mock)'
+  }
+
   async getCLIVersion(): Promise<string> {
     return '1.0.0-mock'
   }

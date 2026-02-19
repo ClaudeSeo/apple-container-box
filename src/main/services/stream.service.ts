@@ -56,11 +56,21 @@ class StreamService {
     }
 
     log.info('Starting log stream', { containerId })
-    const adapter = await this.getAdapter()
-    const proc = adapter.spawnContainerLogs(containerId, {
-      tail: options?.tail || 100,
-      follow: true
-    })
+    let proc: ChildProcess
+    try {
+      const adapter = await this.getAdapter()
+      proc = adapter.spawnContainerLogs(containerId, {
+        tail: options?.tail || 100,
+        follow: true
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to start log stream'
+      log.error('Failed to start log stream', { containerId, error })
+      if (!webContents.isDestroyed()) {
+        webContents.send(`container:logs:stream:${containerId}:error`, { message })
+      }
+      throw new Error(message)
+    }
 
     const session: StreamSession = {
       process: proc,
@@ -152,8 +162,18 @@ class StreamService {
     }
 
     log.info('Starting exec session', { sessionId, containerId, command })
-    const adapter = await this.getAdapter()
-    const proc = adapter.spawnContainerExec(containerId, command)
+    let proc: ChildProcess
+    try {
+      const adapter = await this.getAdapter()
+      proc = adapter.spawnContainerExec(containerId, command)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to start exec session'
+      log.error('Failed to start exec session', { sessionId, containerId, error })
+      if (!webContents.isDestroyed()) {
+        webContents.send(`exec:error:${sessionId}`, { message })
+      }
+      throw new Error(message)
+    }
 
     const session: ExecSession = {
       process: proc,

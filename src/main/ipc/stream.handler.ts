@@ -18,7 +18,9 @@ export function registerStreamHandlers(): void {
       log.debug('stream:subscribe', { type, containerId })
 
       if (type === 'logs') {
-        streamService.startLogStream(containerId, event.sender)
+        void streamService.startLogStream(containerId, event.sender).catch((error) => {
+          log.error('stream:subscribe logs failed', { containerId, error })
+        })
       } else if (type === 'stats') {
         pollingService.startStatsPolling(containerId, event.sender)
       }
@@ -63,17 +65,6 @@ export function registerStreamHandlers(): void {
   ipcMain.on('exec:close', (_event: IpcMainEvent, { sessionId }: { sessionId: string }) => {
     log.debug('exec:close', { sessionId })
     streamService.stopExecSession(sessionId)
-  })
-
-  // 컨테이너 폴링 시작/중지
-  ipcMain.on('polling:containers:start', (event: IpcMainEvent) => {
-    log.debug('polling:containers:start')
-    pollingService.startContainerPolling(event.sender)
-  })
-
-  ipcMain.on('polling:containers:stop', () => {
-    log.debug('polling:containers:stop')
-    pollingService.stopContainerPolling()
   })
 
   log.info('Stream handlers registered')

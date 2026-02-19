@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**apple-container-box** is a macOS-only Electron desktop app that provides a GUI for managing containers via the Apple Container CLI (`container`). It targets macOS 26+ on Apple Silicon (arm64) and serves as a Docker Desktop alternative for the Apple Container ecosystem.
+**Container Box** is a macOS-only Electron desktop app that provides a GUI for managing containers via the Apple Container CLI (`container`). It targets macOS 26+ on Apple Silicon (arm64) and serves as a Docker Desktop alternative for the Apple Container ecosystem.
 
 ## Commands
 
@@ -93,6 +93,7 @@ src/
 ### TypeScript Configs
 
 Two separate compilation contexts — **do not cross-import**:
+
 - `tsconfig.node.json` → `src/main/**` and `src/preload/**` (Node.js types)
 - `tsconfig.web.json` → `src/renderer/src/**` (DOM/browser types)
 

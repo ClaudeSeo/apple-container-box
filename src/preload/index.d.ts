@@ -99,7 +99,7 @@ interface StreamsAPI {
 
 /** System API */
 interface SystemAPI {
-  checkCLI(): Promise<{ available: boolean; path?: string; error?: string }>
+  checkCLI(): Promise<{ available: boolean; path?: string; version?: string; error?: string }>
   getInfo(): Promise<SystemInfo>
   getVersion(): Promise<CLIVersion>
   prune(options?: { volumes?: boolean }): Promise<PruneResult>

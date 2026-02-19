@@ -118,6 +118,7 @@ declare global {
         checkCLI: () => Promise<{
           available: boolean
           path?: string
+          version?: string
           error?: string
           isMock?: boolean
         }>

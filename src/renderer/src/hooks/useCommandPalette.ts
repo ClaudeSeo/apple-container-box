@@ -5,7 +5,7 @@
  * - 최근 사용 명령어 기록
  */
 
-import { useEffect, useCallback, useMemo } from 'react'
+import { useEffect, useCallback, useMemo, useRef } from 'react'
 import {
   Box,
   HardDrive,
@@ -36,7 +36,7 @@ export interface Command {
 }
 
 /** 최근 사용 명령어 저장 키 */
-const RECENT_COMMANDS_KEY = 'apple-container-box:recent-commands'
+const RECENT_COMMANDS_KEY = 'container-box:recent-commands'
 const MAX_RECENT_COMMANDS = 5
 
 /** 최근 사용 명령어 가져오기 */
@@ -293,14 +293,21 @@ export function useCommandPalette() {
 
   // 전체 명령어 목록
   const allCommands: Command[] = useMemo(
-    () => [...navigationCommands, ...actionCommands, ...containerCommands, ...selectedContainerCommands],
+    () => [
+      ...navigationCommands,
+      ...actionCommands,
+      ...containerCommands,
+      ...selectedContainerCommands
+    ],
     [navigationCommands, actionCommands, containerCommands, selectedContainerCommands]
   )
 
   // 최근 사용 명령어
   const recentCommands: Command[] = useMemo(() => {
     const recentIds = getRecentCommands()
-    return recentIds.map((id) => allCommands.find((cmd) => cmd.id === id)).filter((cmd): cmd is Command => !!cmd)
+    return recentIds
+      .map((id) => allCommands.find((cmd) => cmd.id === id))
+      .filter((cmd): cmd is Command => !!cmd)
   }, [allCommands])
 
   return {
@@ -333,21 +340,36 @@ export function useGlobalKeyboardShortcuts() {
     setActiveView,
     toggleSidebar,
     selectedContainerId,
-    setSelectedContainer,
-    detailPanelVisible
+    setSelectedContainer
   } = useUIStore()
   const { containers } = useContainerStore()
+  const commandPaletteOpenRef = useRef(commandPaletteOpen)
+  const selectedContainerIdRef = useRef(selectedContainerId)
+  const containersRef = useRef(containers)
+
+  useEffect(() => {
+    commandPaletteOpenRef.current = commandPaletteOpen
+  }, [commandPaletteOpen])
+
+  useEffect(() => {
+    selectedContainerIdRef.current = selectedContainerId
+  }, [selectedContainerId])
+
+  useEffect(() => {
+    containersRef.current = containers
+  }, [containers])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent): void => {
       const isMeta = e.metaKey || e.ctrlKey
       const target = e.target as HTMLElement
-      const isInputFocused = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+      const isInputFocused =
+        target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
 
       // Cmd+K: Command Palette 토글
       if (isMeta && e.key === 'k') {
         e.preventDefault()
-        setCommandPaletteOpen(!commandPaletteOpen)
+        setCommandPaletteOpen(!commandPaletteOpenRef.current)
         return
       }
 
@@ -378,9 +400,9 @@ export function useGlobalKeyboardShortcuts() {
 
       // Escape: 모달/팔레트/선택 해제
       if (e.key === 'Escape') {
-        if (commandPaletteOpen) {
+        if (commandPaletteOpenRef.current) {
           setCommandPaletteOpen(false)
-        } else if (selectedContainerId) {
+        } else if (selectedContainerIdRef.current) {
           setSelectedContainer(null)
         }
         return
@@ -390,8 +412,9 @@ export function useGlobalKeyboardShortcuts() {
       if (isInputFocused) return
 
       // 선택된 컨테이너가 있을 때만 동작하는 단축키
-      if (selectedContainerId && !commandPaletteOpen) {
-        const container = containers.find((c) => c.id === selectedContainerId)
+      const activeContainerId = selectedContainerIdRef.current
+      if (activeContainerId && !commandPaletteOpenRef.current) {
+        const container = containersRef.current.find((c) => c.id === activeContainerId)
         if (!container) return
 
         // R: Restart
@@ -418,14 +441,5 @@ export function useGlobalKeyboardShortcuts() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [
-    commandPaletteOpen,
-    setCommandPaletteOpen,
-    setActiveView,
-    toggleSidebar,
-    selectedContainerId,
-    setSelectedContainer,
-    detailPanelVisible,
-    containers
-  ])
+  }, [setCommandPaletteOpen, setActiveView, toggleSidebar, setSelectedContainer])
 }

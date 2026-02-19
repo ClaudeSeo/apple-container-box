@@ -31,7 +31,7 @@ export function TitleBar(): JSX.Element {
       {/* 중앙 타이틀 */}
       <div className="flex flex-1 items-center justify-center">
         <span className="no-drag text-xs font-medium text-muted-foreground">
-          {viewTitles[activeView] || 'Apple Container Box'}
+          {viewTitles[activeView] || 'Container Box'}
         </span>
       </div>
 

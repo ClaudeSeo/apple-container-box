@@ -62,6 +62,7 @@ export function useSettings(): UseSettingsReturn {
 interface CLIStatus {
   available: boolean
   path?: string
+  version?: string
   error?: string
   isMock?: boolean
 }

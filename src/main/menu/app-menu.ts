@@ -30,29 +30,6 @@ export function setupApplicationMenu(mainWindow: BrowserWindow): void {
   const template: Electron.MenuItemConstructorOptions[] = [
     ...(isMac ? [appMenu] : []),
     {
-      role: 'fileMenu'
-    },
-    {
-      role: 'editMenu'
-    },
-    {
-      role: 'viewMenu',
-      submenu: [
-        { role: 'reload' },
-        { role: 'forceReload' },
-        { role: 'toggleDevTools' },
-        { type: 'separator' },
-        { role: 'resetZoom' },
-        { role: 'zoomIn' },
-        { role: 'zoomOut' },
-        { type: 'separator' },
-        { role: 'togglefullscreen' }
-      ]
-    },
-    {
-      role: 'windowMenu'
-    },
-    {
       role: 'help',
       submenu: [
         {

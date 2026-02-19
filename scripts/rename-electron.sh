@@ -8,6 +8,6 @@ if [ ! -f "$PLIST" ]; then
   exit 0
 fi
 
-/usr/libexec/PlistBuddy -c "Set :CFBundleName 'Apple Container Box'" "$PLIST"
-/usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName 'Apple Container Box'" "$PLIST"
-echo "[rename-electron] Electron.app renamed to 'Apple Container Box'"
+/usr/libexec/PlistBuddy -c "Set :CFBundleName 'Container Box'" "$PLIST"
+/usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName 'Container Box'" "$PLIST"
+echo "[rename-electron] Electron.app renamed to 'Container Box'"

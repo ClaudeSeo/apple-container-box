@@ -137,7 +137,7 @@ app.whenReady().then(() => {
   app.setName(APP_DISPLAY_NAME)
 
   // Electron 앱 ID 설정 (macOS)
-  electronApp.setAppUserModelId('com.apple-container-box.app')
+  electronApp.setAppUserModelId('com.containerbox.app')
 
   // macOS Dock 아이콘 설정 (개발 모드에서도 적용)
   // 패키지 빌드: electron-builder가 .icns 처리 / 개발 모드: PNG 직접 사용
