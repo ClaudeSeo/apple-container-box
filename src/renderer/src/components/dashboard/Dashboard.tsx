@@ -56,7 +56,7 @@ export function Dashboard(): JSX.Element {
                 Loading containers...
               </div>
             ) : recentContainers.length === 0 ? (
-              <div className="flex h-48 flex-col items-center justify-center rounded-lg border border-dashed border-border">
+              <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-border">
                 <p className="text-muted-foreground">No running containers</p>
                 <Button
                   variant="link"

@@ -66,9 +66,9 @@ export function VolumeList(_props: VolumeListProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div className="flex items-center justify-between p-4 border-b border-border bg-card">
         <div className="flex items-center gap-2">
-          <Database className="w-5 h-5 text-accent" />
+          <Database className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-semibold">Volumes</h2>
           <span className="text-sm text-muted-foreground">({volumes.length})</span>
         </div>
@@ -121,9 +121,9 @@ export function VolumeList(_props: VolumeListProps) {
                 <TableRow key={volume.name}>
                   <TableCell className="font-medium font-mono">{volume.name}</TableCell>
                   <TableCell>
-                    <span className="px-2 py-0.5 bg-surface rounded text-sm">{volume.driver}</span>
+                    <span className="bg-secondary border border-border text-muted-foreground text-xs px-2 py-0.5 rounded-md">{volume.driver}</span>
                   </TableCell>
-                  <TableCell className="font-mono text-sm text-muted-foreground truncate max-w-[300px]">
+                  <TableCell className="font-mono text-xs text-muted-foreground truncate max-w-[300px]">
                     {volume.mountpoint}
                   </TableCell>
                   <TableCell className="text-muted-foreground">

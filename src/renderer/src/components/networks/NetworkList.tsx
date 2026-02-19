@@ -73,9 +73,9 @@ export function NetworkList(_props: NetworkListProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div className="flex items-center justify-between p-4 border-b border-border bg-card">
         <div className="flex items-center gap-2">
-          <NetworkIcon className="w-5 h-5 text-accent" />
+          <NetworkIcon className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-semibold">Networks</h2>
           <span className="text-sm text-muted-foreground">({networks.length})</span>
         </div>
@@ -131,7 +131,7 @@ export function NetworkList(_props: NetworkListProps) {
                   <TableCell className="font-medium">
                     {network.name}
                     {isSystemNetwork(network.name) && (
-                      <span className="ml-2 px-1.5 py-0.5 bg-muted text-muted-foreground text-xs rounded">
+                      <span className="ml-2 px-2 py-0.5 bg-[#FF9500]/10 text-[#FF9500] border border-[#FF9500]/20 text-xs rounded-md">
                         system
                       </span>
                     )}
@@ -140,7 +140,7 @@ export function NetworkList(_props: NetworkListProps) {
                     {network.id.slice(0, 12)}
                   </TableCell>
                   <TableCell>
-                    <span className="px-2 py-0.5 bg-surface rounded text-sm">{network.driver}</span>
+                    <span className="bg-secondary border border-border text-muted-foreground text-xs px-2 py-0.5 rounded-md">{network.driver}</span>
                   </TableCell>
                   <TableCell className="font-mono text-sm">
                     {network.subnet || '-'}

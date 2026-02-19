@@ -4,40 +4,49 @@
 
 @layer base {
   :root {
-    /* shadcn/ui 기본 CSS 변수 */
-    --background: 240 20% 14%;
-    --foreground: 210 40% 98%;
-    --card: 240 18% 17%;
-    --card-foreground: 210 40% 98%;
-    --popover: 240 18% 17%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 239 84% 67%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 240 25% 28%;
-    --input: 217 33% 17%;
-    --ring: 239 84% 67%;
-    --radius: 0.5rem;
+    /* Solid Dark Theme */
+    --background: 0 0% 7%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 211 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 90%;
+    --muted: 0 0% 11%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 0 0% 12%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 4 100% 59%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 11%;
+    --input: 0 0% 14%;
+    --ring: 211 100% 50%;
+    --radius: 0.75rem;
+
+    /* Glass material tokens (solid values) */
+    --glass-bg: #171717;
+    --glass-bg-hover: #1c1c1c;
+    --glass-bg-active: #222222;
+    --glass-border: #1c1c1c;
+    --glass-border-strong: #2a2a2a;
+    --glass-shadow: none;
+    --glass-shadow-lg: none;
 
     /* 커스텀 앱 색상 변수 */
-    --background-hex: #1a1a2e;
-    --background-secondary: #16213e;
-    --foreground-hex: #e5e7eb;
-    --border-hex: #2d2d44;
+    --background-hex: #121212;
+    --background-secondary: #171717;
+    --foreground-hex: #f2f2f2;
+    --border-hex: #1c1c1c;
 
-    /* 컨테이너 상태 색상 */
-    --status-running: #4ade80;
-    --status-stopped: #6b7280;
-    --status-error: #ef4444;
-    --status-paused: #f59e0b;
-    --status-restarting: #3b82f6;
+    /* 컨테이너 상태 색상 - Apple System Colors */
+    --status-running: #34C759;
+    --status-stopped: #8E8E93;
+    --status-error: #FF3B30;
+    --status-paused: #FF9500;
+    --status-restarting: #007AFF;
   }
 }
 
@@ -80,11 +89,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-border rounded-full;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/50;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* 선택 영역 스타일링 */
@@ -100,6 +110,36 @@
 
   .focus-visible-ring {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  /* Glass material utilities (solid) */
+  .glass-panel {
+    background: var(--glass-bg);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius);
+  }
+  .glass-panel:hover {
+    background: var(--glass-bg-hover);
+  }
+  .glass-panel:active {
+    background: var(--glass-bg-active);
+  }
+
+  .glass-surface {
+    background: hsl(var(--card));
+  }
+
+  .glass-sidebar {
+    background: hsl(var(--card));
+  }
+
+  .glass-titlebar {
+    background: hsl(var(--background));
+  }
+
+  .glass-overlay {
+    background: hsl(var(--background));
+    border: 1px solid var(--glass-border);
   }
 }
 
@@ -119,7 +159,8 @@
 
 /* 터미널/로그 뷰어 스타일 */
 .terminal-container {
-  @apply font-mono text-sm bg-black/50 rounded-md;
+  @apply font-mono text-sm rounded-lg;
+  background: #0a0c10;
 }
 
 .log-line {

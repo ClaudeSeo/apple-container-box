@@ -22,7 +22,7 @@ export function TitleBar(): JSX.Element {
     <header
       className={cn(
         'drag-region fixed left-0 right-0 top-0 z-50',
-        'flex h-9 items-center border-b border-border bg-background/80 backdrop-blur-md'
+        'flex h-9 items-center glass-titlebar'
       )}
     >
       {/* macOS 트래픽 라이트 버튼 영역 (왼쪽 여백) */}

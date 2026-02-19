@@ -31,10 +31,10 @@ export function ContainerShell({ containerId }: ContainerShellProps): JSX.Elemen
 
     const terminal = new Terminal({
       theme: {
-        background: '#0d0d14',
-        foreground: '#e5e7eb',
-        cursor: '#6366f1',
-        selectionBackground: '#6366f140'
+        background: '#0a0c10',
+        foreground: '#f2f2f2',
+        cursor: '#007AFF',
+        selectionBackground: 'rgba(0, 122, 255, 0.25)'
       },
       fontFamily: 'SF Mono, JetBrains Mono, Menlo, Monaco, monospace',
       fontSize: 12,
@@ -122,7 +122,7 @@ export function ContainerShell({ containerId }: ContainerShellProps): JSX.Elemen
   return (
     <div className="flex h-full flex-col">
       {/* 툴바 */}
-      <div className="flex items-center justify-between border-b border-border bg-background px-3 py-2">
+      <div className="flex items-center justify-between border-b border-border bg-card px-3 py-2">
         <div className="flex items-center gap-2">
           <span
             className={`h-2 w-2 rounded-full ${isConnected ? 'bg-status-running' : 'bg-status-stopped'}`}
@@ -149,7 +149,7 @@ export function ContainerShell({ containerId }: ContainerShellProps): JSX.Elemen
       </div>
 
       {/* 터미널 */}
-      <div ref={containerRef} className="flex-1 bg-[#0d0d14]" />
+      <div ref={containerRef} className="flex-1 bg-[#0a0c10]" />
     </div>
   )
 }

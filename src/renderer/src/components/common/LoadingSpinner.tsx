@@ -18,7 +18,7 @@ export function LoadingSpinner({ size = 'md', className }: LoadingSpinnerProps):
   return (
     <div
       className={cn(
-        'animate-spin rounded-full border-accent border-t-transparent',
+        'animate-spin rounded-full border-primary border-t-transparent',
         sizeClasses[size],
         className
       )}
@@ -37,7 +37,7 @@ interface LoadingOverlayProps {
  */
 export function LoadingOverlay({ message = 'Loading...' }: LoadingOverlayProps): JSX.Element {
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+    <div className="absolute inset-0 flex items-center justify-center bg-black/60">
       <div className="flex flex-col items-center gap-3">
         <LoadingSpinner size="lg" />
         <span className="text-sm text-muted-foreground">{message}</span>

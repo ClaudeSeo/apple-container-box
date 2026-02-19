@@ -31,8 +31,8 @@ export function ContainerCard({ container }: ContainerCardProps): JSX.Element {
     <Card
       className={cn(
         'cursor-pointer transition-all duration-150',
-        'hover:border-accent/50 hover:bg-surface-hover',
-        isSelected && 'border-accent bg-surface-hover'
+        'hover:border-primary/30 hover:bg-accent',
+        isSelected && 'border-primary/50 bg-accent'
       )}
       onClick={handleClick}
     >

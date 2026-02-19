@@ -34,7 +34,7 @@ export function ResourceOverview(): JSX.Element {
   const diskPercent = resources ? (resources.diskUsed / resources.diskTotal) * 100 : 0
 
   return (
-    <Card>
+    <Card className="glass-panel">
       <CardHeader className="pb-3">
         <CardTitle className="text-base">System Resources</CardTitle>
       </CardHeader>

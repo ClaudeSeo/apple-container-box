@@ -45,20 +45,24 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))'
         },
-        // 커스텀 상태 색상
+        /* 컨테이너 상태 색상 - Apple System Colors */
         status: {
-          running: '#4ade80',
-          stopped: '#6b7280',
-          error: '#ef4444',
-          paused: '#f59e0b',
-          restarting: '#3b82f6'
+          running: '#34C759',
+          stopped: '#8E8E93',
+          error: '#FF3B30',
+          paused: '#FF9500',
+          restarting: '#007AFF'
         },
-        // 커스텀 surface 색상
+        /* Solid surface 색상 */
         surface: {
-          DEFAULT: '#1e2140',
-          hover: '#252847',
-          active: '#2d3160'
+          DEFAULT: '#171717',
+          hover: '#1c1c1c',
+          active: '#222222'
         }
+      },
+      boxShadow: {
+        'glass': 'none',
+        'glass-lg': 'none'
       },
       borderRadius: {
         lg: 'var(--radius)',

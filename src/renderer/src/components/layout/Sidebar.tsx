@@ -13,7 +13,6 @@ import { cn } from '@/lib/utils'
 import { useUIStore, type ActiveView } from '@/stores'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 
 interface NavItem {
   id: ActiveView
@@ -44,26 +43,10 @@ export function Sidebar(): JSX.Element {
     <TooltipProvider delayDuration={0}>
       <aside
         className={cn(
-          'flex flex-col border-r border-border bg-background-secondary transition-all duration-200',
-          sidebarCollapsed ? 'w-16' : 'w-52'
+          'flex flex-col glass-sidebar transition-all duration-200',
+          sidebarCollapsed ? 'w-16' : 'w-60'
         )}
       >
-        {/* 로고 영역 */}
-        <div className="flex h-14 items-center justify-center border-b border-border px-3">
-          {sidebarCollapsed ? (
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/20">
-              <span className="text-sm font-bold text-accent">AC</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/20">
-                <span className="text-xs font-bold text-accent">AC</span>
-              </div>
-              <span className="text-sm font-semibold text-foreground">Container Box</span>
-            </div>
-          )}
-        </div>
-
         {/* 메인 네비게이션 */}
         <nav className="flex-1 space-y-1 p-2">
           {NAV_ITEMS.map((item) => (
@@ -76,8 +59,6 @@ export function Sidebar(): JSX.Element {
             />
           ))}
         </nav>
-
-        <Separator />
 
         {/* 하단 네비게이션 */}
         <div className="space-y-1 p-2">
@@ -108,7 +89,7 @@ export function Sidebar(): JSX.Element {
                 ) : (
                   <>
                     <ChevronLeft className="mr-2 h-4 w-4" />
-                    <span className="text-xs">Collapse</span>
+                    <span className="text-sm">Collapse</span>
                   </>
                 )}
               </Button>
@@ -137,13 +118,13 @@ function NavButton({ item, isActive, isCollapsed, onClick }: NavButtonProps): JS
       size="sm"
       onClick={onClick}
       className={cn(
-        'w-full justify-start',
-        isActive && 'bg-accent/20 text-accent hover:bg-accent/30',
+        'w-full justify-start text-muted-foreground hover:text-foreground hover:bg-accent/30',
+        isActive && 'bg-accent/50 text-foreground hover:bg-accent/50',
         isCollapsed && 'justify-center px-0'
       )}
     >
       <Icon className={cn('h-4 w-4', !isCollapsed && 'mr-2')} />
-      {!isCollapsed && <span className="text-xs">{item.label}</span>}
+      {!isCollapsed && <span className="text-sm">{item.label}</span>}
     </Button>
   )
 

@@ -45,13 +45,13 @@ export function ContainerStats({ containerId }: ContainerStatsProps): JSX.Elemen
         <StatCard
           title="CPU"
           value={currentStats ? formatPercent(currentStats.cpuPercent / 100, 1) : '-'}
-          color="#6366f1"
+          color="#007AFF"
         />
         <StatCard
           title="Memory"
           value={currentStats ? formatBytes(currentStats.memoryUsage) : '-'}
           subValue={currentStats ? formatPercent(memoryPercent / 100, 1) : undefined}
-          color="#22c55e"
+          color="#34C759"
         />
       </div>
 
@@ -64,7 +64,7 @@ export function ContainerStats({ containerId }: ContainerStatsProps): JSX.Elemen
           <div className="h-32">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2d3060" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.08)" />
                 <XAxis dataKey="index" hide />
                 <YAxis
                   domain={[0, 100]}
@@ -74,9 +74,9 @@ export function ContainerStats({ containerId }: ContainerStatsProps): JSX.Elemen
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#1e2140',
-                    border: '1px solid #2d3060',
-                    borderRadius: '6px'
+                    backgroundColor: '#1f1f1f',
+                    border: '1px solid #282828',
+                    borderRadius: '8px'
                   }}
                   labelStyle={{ color: '#e5e7eb' }}
                   formatter={(value: number) => `${value.toFixed(1)}%`}
@@ -84,7 +84,7 @@ export function ContainerStats({ containerId }: ContainerStatsProps): JSX.Elemen
                 <Line
                   type="monotone"
                   dataKey="cpu"
-                  stroke="#6366f1"
+                  stroke="#007AFF"
                   strokeWidth={2}
                   dot={false}
                   isAnimationActive={false}
@@ -104,7 +104,7 @@ export function ContainerStats({ containerId }: ContainerStatsProps): JSX.Elemen
           <div className="h-32">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2d3060" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.08)" />
                 <XAxis dataKey="index" hide />
                 <YAxis
                   domain={[0, 100]}
@@ -114,9 +114,9 @@ export function ContainerStats({ containerId }: ContainerStatsProps): JSX.Elemen
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#1e2140',
-                    border: '1px solid #2d3060',
-                    borderRadius: '6px'
+                    backgroundColor: '#1f1f1f',
+                    border: '1px solid #282828',
+                    borderRadius: '8px'
                   }}
                   labelStyle={{ color: '#e5e7eb' }}
                   formatter={(value: number) => `${value.toFixed(1)}%`}
@@ -124,7 +124,7 @@ export function ContainerStats({ containerId }: ContainerStatsProps): JSX.Elemen
                 <Line
                   type="monotone"
                   dataKey="memory"
-                  stroke="#22c55e"
+                  stroke="#34C759"
                   strokeWidth={2}
                   dot={false}
                   isAnimationActive={false}
@@ -138,8 +138,8 @@ export function ContainerStats({ containerId }: ContainerStatsProps): JSX.Elemen
       {/* 네트워크 I/O */}
       {currentStats && (
         <div className="grid grid-cols-2 gap-3">
-          <StatCard title="Network RX" value={formatBytes(currentStats.networkRx)} color="#f59e0b" />
-          <StatCard title="Network TX" value={formatBytes(currentStats.networkTx)} color="#ef4444" />
+          <StatCard title="Network RX" value={formatBytes(currentStats.networkRx)} color="#FF9500" />
+          <StatCard title="Network TX" value={formatBytes(currentStats.networkTx)} color="#FF3B30" />
         </div>
       )}
     </div>

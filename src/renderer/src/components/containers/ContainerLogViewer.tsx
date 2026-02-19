@@ -35,7 +35,7 @@ export function ContainerLogViewer({ containerId }: ContainerLogViewerProps): JS
   return (
     <div className="flex h-full flex-col">
       {/* 툴바 */}
-      <div className="flex items-center justify-between border-b border-border bg-background px-3 py-2">
+      <div className="flex items-center justify-between border-b border-border bg-card px-3 py-2">
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">
             {isStreaming ? 'Streaming...' : 'Stopped'}
@@ -78,7 +78,7 @@ export function ContainerLogViewer({ containerId }: ContainerLogViewerProps): JS
       </div>
 
       {/* 터미널 */}
-      <div ref={containerRef as React.RefObject<HTMLDivElement>} className="flex-1 bg-[#0d0d14]" />
+      <div ref={containerRef as React.RefObject<HTMLDivElement>} className="flex-1 bg-[#0a0c10]" />
     </div>
   )
 }

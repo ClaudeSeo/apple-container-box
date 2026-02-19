@@ -14,15 +14,15 @@ interface StatCardProps {
 
 function StatCard({ icon: Icon, label, value, subLabel, color }: StatCardProps): JSX.Element {
   return (
-    <Card>
+    <Card className="glass-panel">
       <CardContent className="flex items-center gap-4 p-4">
-        <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${color || 'bg-accent/20'}`}>
-          <Icon className="h-6 w-6 text-accent" />
+        <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${color || 'bg-primary/10'}`}>
+          <Icon className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <p className="text-2xl font-semibold text-foreground">{value}</p>
-          <p className="text-sm text-muted-foreground">{label}</p>
-          {subLabel && <p className="text-xs text-muted-foreground/70">{subLabel}</p>}
+          <p className="text-2xl font-bold text-foreground">{value}</p>
+          <p className="text-xs text-muted-foreground">{label}</p>
+          {subLabel && <p className="text-xs text-muted-foreground">{subLabel}</p>}
         </div>
       </CardContent>
     </Card>

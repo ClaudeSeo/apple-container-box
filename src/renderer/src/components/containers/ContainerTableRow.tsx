@@ -32,7 +32,7 @@ export function ContainerTableRow({ container }: ContainerTableRowProps): JSX.El
     <TableRow
       className={cn(
         'cursor-pointer',
-        isSelected && 'bg-accent/10'
+        isSelected && 'bg-primary/10'
       )}
       onClick={handleClick}
     >

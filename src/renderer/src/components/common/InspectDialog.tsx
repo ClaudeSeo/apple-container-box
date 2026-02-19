@@ -42,10 +42,10 @@ function maskSensitiveData(obj: unknown): unknown {
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue }
 
 function JsonTree({ data, level = 0 }: { data: JsonValue; level?: number }): JSX.Element {
-  if (data === null) return <span className="text-muted-foreground">null</span>
-  if (typeof data === 'boolean') return <span className="text-yellow-500">{String(data)}</span>
-  if (typeof data === 'number') return <span className="text-cyan-400">{data}</span>
-  if (typeof data === 'string') return <span className="text-green-400">&quot;{data}&quot;</span>
+  if (data === null) return <span className="text-[#FF9500]">null</span>
+  if (typeof data === 'boolean') return <span className="text-[#FF9500]">{String(data)}</span>
+  if (typeof data === 'number') return <span className="text-[#64D2FF]">{data}</span>
+  if (typeof data === 'string') return <span className="text-[#30D158]">&quot;{data}&quot;</span>
   if (Array.isArray(data)) {
     if (data.length === 0) return <span className="text-muted-foreground">[]</span>
     return <JsonArrayView data={data} level={level} />
@@ -80,7 +80,7 @@ function JsonObjectView({
         <div className="ml-4 border-l border-border pl-2">
           {entries.map(([key, value]) => (
             <div key={key} className="py-0.5">
-              <span className="text-purple-400">&quot;{key}&quot;</span>
+              <span className="text-white/80">&quot;{key}&quot;</span>
               <span className="text-muted-foreground">: </span>
               <JsonTree data={value} level={level + 1} />
             </div>
@@ -153,7 +153,7 @@ export function InspectDialog({ title, data, open, onOpenChange }: InspectDialog
           </Button>
         </div>
         <ScrollArea className="flex-1">
-          <div className="p-3 font-mono text-sm">
+          <div className="p-3 font-mono text-sm bg-[#0a0c10] rounded-lg">
             {maskedData ? <JsonTree data={maskedData as JsonValue} /> : null}
           </div>
         </ScrollArea>

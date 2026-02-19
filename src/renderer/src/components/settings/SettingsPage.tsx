@@ -78,9 +78,9 @@ export function SettingsPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div className="flex items-center justify-between p-4 border-b border-border bg-card">
         <div className="flex items-center gap-2">
-          <Settings className="w-5 h-5 text-accent" />
+          <Settings className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-semibold">Settings</h2>
         </div>
         <div className="flex items-center gap-2">
@@ -107,15 +107,15 @@ export function SettingsPage() {
       <ScrollArea className="flex-1">
         <div className="p-6 space-y-8 max-w-2xl">
           {/* General */}
-          <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+          <section className="space-y-4 bg-card border border-border rounded-xl p-4">
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
               General
             </h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="auto-launch">Auto Launch</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Start application on system login
                   </p>
                 </div>
@@ -128,7 +128,7 @@ export function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="show-tray">Show Tray Icon</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Display icon in system tray/menu bar
                   </p>
                 </div>
@@ -141,7 +141,7 @@ export function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="minimize-tray">Minimize to Tray</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Minimize to tray instead of closing
                   </p>
                 </div>
@@ -157,8 +157,8 @@ export function SettingsPage() {
           <Separator />
 
           {/* Appearance */}
-          <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+          <section className="space-y-4 bg-card border border-border rounded-xl p-4">
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
               <Monitor className="w-4 h-4" />
               Appearance
             </h3>
@@ -195,7 +195,7 @@ export function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="compact-mode">Compact Mode</Label>
-                  <p className="text-sm text-muted-foreground">Use smaller UI elements</p>
+                  <p className="text-xs text-muted-foreground">Use smaller UI elements</p>
                 </div>
                 <Switch
                   id="compact-mode"
@@ -209,13 +209,13 @@ export function SettingsPage() {
           <Separator />
 
           {/* CLI Settings */}
-          <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+          <section className="space-y-4 bg-card border border-border rounded-xl p-4">
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
               <Terminal className="w-4 h-4" />
               Apple Container CLI
             </h3>
             <div className="space-y-4">
-              <div className="p-4 bg-surface rounded-lg space-y-2">
+              <div className="p-4 bg-[#0a0c10] rounded-lg space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Status</span>
                   <span
@@ -287,8 +287,8 @@ export function SettingsPage() {
           <Separator />
 
           {/* Notifications */}
-          <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+          <section className="space-y-4 bg-card border border-border rounded-xl p-4">
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
               <Bell className="w-4 h-4" />
               Notifications
             </h3>
@@ -296,7 +296,7 @@ export function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="notifications-enabled">Enable Notifications</Label>
-                  <p className="text-sm text-muted-foreground">Show desktop notifications</p>
+                  <p className="text-xs text-muted-foreground">Show desktop notifications</p>
                 </div>
                 <Switch
                   id="notifications-enabled"
@@ -309,7 +309,7 @@ export function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="notify-status">Status Change Alerts</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Notify when container status changes
                   </p>
                 </div>
@@ -325,7 +325,7 @@ export function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="notify-pull">Image Pull Alerts</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Notify when image pull completes
                   </p>
                 </div>
@@ -341,7 +341,7 @@ export function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="notify-error">Error Alerts</Label>
-                  <p className="text-sm text-muted-foreground">Notify on errors</p>
+                  <p className="text-xs text-muted-foreground">Notify on errors</p>
                 </div>
                 <Switch
                   id="notify-error"

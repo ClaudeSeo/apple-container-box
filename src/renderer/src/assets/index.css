@@ -4,26 +4,33 @@
 
 @layer base {
   :root {
-    --background: 240 20% 14%;
-    --foreground: 210 40% 98%;
-    --card: 240 18% 17%;
-    --card-foreground: 210 40% 98%;
-    --popover: 240 18% 17%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 239 84% 67%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 240 25% 28%;
-    --input: 217 33% 17%;
-    --ring: 239 84% 67%;
-    --radius: 0.5rem;
+    /* Solid Dark Theme */
+    --background: 0 0% 7%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 211 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 90%;
+    --muted: 0 0% 11%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 0 0% 12%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 4 100% 59%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 11%;
+    --input: 0 0% 14%;
+    --ring: 211 100% 50%;
+    --radius: 0.75rem;
+
+    /* 커스텀 앱 색상 변수 */
+    --background-hex: #121212;
+    --background-secondary: #171717;
+    --foreground-hex: #f2f2f2;
+    --border-hex: #1c1c1c;
   }
 }
 
@@ -43,15 +50,16 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-background-secondary;
+  @apply bg-transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-border rounded-full;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-surface-active;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* Selection styling */

@@ -18,7 +18,7 @@ export default function AppLayout(): JSX.Element {
       <TitleBar />
 
       {/* 메인 영역 (타이틀바 높이만큼 패딩) */}
-      <div className="flex flex-1 overflow-hidden pt-9">
+      <div className="flex flex-1 overflow-hidden pt-12">
         {/* 사이드바 */}
         <Sidebar />
 

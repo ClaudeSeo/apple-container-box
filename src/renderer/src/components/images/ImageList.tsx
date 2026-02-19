@@ -68,9 +68,9 @@ export function ImageList(_props: ImageListProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div className="flex items-center justify-between p-4 border-b border-border bg-card">
         <div className="flex items-center gap-2">
-          <HardDrive className="w-5 h-5 text-accent" />
+          <HardDrive className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-semibold">Images</h2>
           <span className="text-sm text-muted-foreground">({images.length})</span>
         </div>
@@ -124,7 +124,7 @@ export function ImageList(_props: ImageListProps) {
                 <TableRow key={`${image.id}-${image.repository}-${image.tag}-${index}`}>
                   <TableCell className="font-medium">{image.repository}</TableCell>
                   <TableCell>
-                    <span className="px-2 py-0.5 bg-surface rounded text-sm">{image.tag}</span>
+                    <span className="bg-secondary border border-border text-muted-foreground text-xs px-2 py-0.5 rounded-md">{image.tag}</span>
                   </TableCell>
                   <TableCell className="font-mono text-sm text-muted-foreground">
                     {(image.id ?? '').slice(0, 12) || '—'}

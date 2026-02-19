@@ -41,11 +41,11 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="flex min-h-[200px] flex-col items-center justify-center p-6">
+        <div className="flex min-h-[200px] flex-col items-center justify-center p-6 bg-card border border-border rounded-xl">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/20">
             <AlertTriangle className="h-6 w-6 text-destructive" />
           </div>
-          <h3 className="mt-4 text-lg font-medium text-foreground">Something went wrong</h3>
+          <h3 className="mt-4 text-lg font-medium text-destructive">Something went wrong</h3>
           <p className="mt-2 max-w-sm text-center text-sm text-muted-foreground">
             {this.state.error?.message || 'An unexpected error occurred'}
           </p>

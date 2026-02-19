@@ -77,7 +77,7 @@ export function ContainerInspect({ containerId }: ContainerInspectProps): JSX.El
   return (
     <div className="flex h-full flex-col">
       {/* 툴바 */}
-      <div className="flex items-center justify-end border-b border-border bg-background px-3 py-2">
+      <div className="flex items-center justify-end border-b border-border bg-card px-3 py-2">
         <Button variant="ghost" size="sm" onClick={handleCopy} className="h-7 text-xs">
           {copied ? (
             <>
@@ -134,7 +134,7 @@ type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string
  */
 function JsonTree({ data, level = 0 }: { data: JsonValue; level?: number }): JSX.Element {
   if (data === null) {
-    return <span className="text-muted-foreground">null</span>
+    return <span className="text-[#FF9500]">null</span>
   }
 
   if (typeof data === 'boolean') {
@@ -142,11 +142,11 @@ function JsonTree({ data, level = 0 }: { data: JsonValue; level?: number }): JSX
   }
 
   if (typeof data === 'number') {
-    return <span className="text-cyan-400">{data}</span>
+    return <span className="text-[#64D2FF]">{data}</span>
   }
 
   if (typeof data === 'string') {
-    return <span className="text-green-400">&quot;{data}&quot;</span>
+    return <span className="text-[#30D158]">&quot;{data}&quot;</span>
   }
 
   if (Array.isArray(data)) {
