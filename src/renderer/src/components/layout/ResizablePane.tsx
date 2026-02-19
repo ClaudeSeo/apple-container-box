@@ -28,14 +28,28 @@ export function ResizablePane({
   }
 
   return (
-    <Group orientation="horizontal" className="flex-1">
-      <Panel id="main" minSize={50} defaultSize={100 - defaultRightPanelSize}>
+    <Group
+      orientation="horizontal"
+      className="flex-1"
+      resizeTargetMinimumSize={{ fine: 10, coarse: 24 }}
+    >
+      <Panel
+        id="main"
+        minSize={`${100 - maxRightPanelSize}%`}
+        defaultSize={`${100 - defaultRightPanelSize}%`}
+      >
         {children}
       </Panel>
-      <Separator className="relative w-px bg-border hover:bg-accent transition-colors">
-        <div className="absolute inset-y-0 -left-1 -right-1 cursor-col-resize" />
+      <Separator className="group relative w-[3px] bg-border/70 transition-colors hover:bg-accent">
+        <div className="absolute inset-y-0 -left-2 -right-2 cursor-col-resize" />
+        <div className="absolute inset-y-1 left-1/2 w-px -translate-x-1/2 bg-border/90 group-hover:bg-accent" />
       </Separator>
-      <Panel id="detail" minSize={minRightPanelSize} maxSize={maxRightPanelSize} defaultSize={defaultRightPanelSize}>
+      <Panel
+        id="detail"
+        minSize={`${minRightPanelSize}%`}
+        maxSize={`${maxRightPanelSize}%`}
+        defaultSize={`${defaultRightPanelSize}%`}
+      >
         {rightPanel}
       </Panel>
     </Group>

@@ -3,6 +3,7 @@ import { TitleBar } from './TitleBar'
 import { Sidebar } from './Sidebar'
 import { MainContent } from './MainContent'
 import { DetailPanel } from './DetailPanel'
+import { ResizablePane } from './ResizablePane'
 import { CommandPalette } from '@/components/common/CommandPalette'
 
 /**
@@ -22,11 +23,15 @@ export default function AppLayout(): JSX.Element {
         {/* 사이드바 */}
         <Sidebar />
 
-        {/* 메인 콘텐츠 */}
-        <MainContent />
-
-        {/* 상세 패널 (컨테이너 선택 시 표시) */}
-        {detailPanelVisible && <DetailPanel />}
+        <ResizablePane
+          rightPanelVisible={detailPanelVisible}
+          rightPanel={<DetailPanel />}
+          defaultRightPanelSize={28}
+          minRightPanelSize={20}
+          maxRightPanelSize={55}
+        >
+          <MainContent />
+        </ResizablePane>
       </div>
 
       {/* Command Palette (Cmd+K) */}

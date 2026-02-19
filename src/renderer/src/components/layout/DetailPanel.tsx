@@ -46,7 +46,7 @@ export function DetailPanel(): JSX.Element {
   return (
     <aside
       className={cn(
-        'flex w-[420px] flex-col bg-card border-l border-border',
+        'flex h-full w-full flex-col bg-card border-l border-border',
         'animate-in slide-in-from-right duration-200'
       )}
     >
@@ -76,10 +76,18 @@ export function DetailPanel(): JSX.Element {
           <TabsTrigger value="logs" className="text-xs">
             Logs
           </TabsTrigger>
-          <TabsTrigger value="stats" className="text-xs" disabled={selectedContainer.status !== 'running'}>
+          <TabsTrigger
+            value="stats"
+            className="text-xs"
+            disabled={selectedContainer.status !== 'running'}
+          >
             Stats
           </TabsTrigger>
-          <TabsTrigger value="shell" className="text-xs" disabled={selectedContainer.status !== 'running'}>
+          <TabsTrigger
+            value="shell"
+            className="text-xs"
+            disabled={selectedContainer.status !== 'running'}
+          >
             Shell
           </TabsTrigger>
           <TabsTrigger value="inspect" className="text-xs">
