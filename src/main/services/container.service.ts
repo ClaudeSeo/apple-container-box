@@ -11,6 +11,10 @@ const log = logger.scope('ContainerService')
 class ContainerService {
   private adapter: ContainerCLIAdapter | null = null
 
+  resetAdapter(): void {
+    this.adapter = null
+  }
+
   /** 어댑터 초기화 */
   private async getAdapter(): Promise<ContainerCLIAdapter> {
     if (!this.adapter) {

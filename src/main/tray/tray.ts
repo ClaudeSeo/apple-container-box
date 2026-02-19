@@ -7,11 +7,13 @@ import { app, Tray, Menu, nativeImage, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { logger } from '../utils/logger'
 import { APP_DISPLAY_NAME } from '../utils/constants'
+import { containerService } from '../services/container.service'
 
 const log = logger.scope('Tray')
 
 /** 트레이 인스턴스 */
 let tray: Tray | null = null
+let runningCountTimer: NodeJS.Timeout | null = null
 
 /** 현재 실행 중인 컨테이너 수 */
 let runningCount = 0
@@ -60,6 +62,13 @@ export function createTray(mainWindow: BrowserWindow): Tray {
 
   // 컨텍스트 메뉴 설정
   updateTrayMenu(mainWindow)
+  void refreshRunningCount(mainWindow)
+
+  if (!runningCountTimer) {
+    runningCountTimer = setInterval(() => {
+      void refreshRunningCount(mainWindow)
+    }, 5000)
+  }
 
   // 더블 클릭으로 윈도우 표시
   tray.on('double-click', () => {
@@ -100,17 +109,13 @@ export function updateTrayMenu(mainWindow: BrowserWindow): void {
         {
           label: 'Refresh Containers',
           click: () => {
-            if (!mainWindow.isDestroyed()) {
-              mainWindow.webContents.send('tray:refresh')
-            }
+            emitTrayEvent(mainWindow, 'tray:refresh-containers')
           }
         },
         {
-          label: 'Stop All Containers',
-          click: () => {
-            if (!mainWindow.isDestroyed()) {
-              mainWindow.webContents.send('tray:stop-all')
-            }
+          label: 'Stop All Running Containers',
+          click: async () => {
+            await stopAllRunningContainers(mainWindow)
           }
         }
       ]
@@ -137,9 +142,7 @@ export function updateRunningCount(count: number, mainWindow: BrowserWindow): vo
 
   // 툴팁 업데이트
   if (tray) {
-    const tooltip = count > 0
-      ? `${APP_DISPLAY_NAME} - ${count} running`
-      : APP_DISPLAY_NAME
+    const tooltip = count > 0 ? `${APP_DISPLAY_NAME} - ${count} running` : APP_DISPLAY_NAME
     tray.setToolTip(tooltip)
   }
 }
@@ -157,10 +160,48 @@ function showMainWindow(mainWindow: BrowserWindow): void {
   mainWindow.focus()
 }
 
+function emitTrayEvent(mainWindow: BrowserWindow, channel: 'tray:refresh-containers'): void {
+  if (!mainWindow.isDestroyed()) {
+    mainWindow.webContents.send(channel)
+  }
+}
+
+async function stopAllRunningContainers(mainWindow: BrowserWindow): Promise<void> {
+  try {
+    const containers = await containerService.listContainers({ all: true })
+    const runningContainers = containers.filter((container) => container.status === 'running')
+
+    await Promise.allSettled(
+      runningContainers.map((container) => containerService.stopContainer(container.id))
+    )
+    updateRunningCount(0, mainWindow)
+    emitTrayEvent(mainWindow, 'tray:refresh-containers')
+
+    log.info('Stopped running containers from tray', { count: runningContainers.length })
+  } catch (error) {
+    log.error('Failed to stop running containers from tray', error)
+  }
+}
+
+async function refreshRunningCount(mainWindow: BrowserWindow): Promise<void> {
+  try {
+    const containers = await containerService.listContainers({ all: true })
+    const count = containers.filter((container) => container.status === 'running').length
+    updateRunningCount(count, mainWindow)
+  } catch (error) {
+    log.debug('Failed to refresh running count for tray', error)
+  }
+}
+
 /**
  * 트레이 제거
  */
 export function destroyTray(): void {
+  if (runningCountTimer) {
+    clearInterval(runningCountTimer)
+    runningCountTimer = null
+  }
+
   if (tray) {
     log.info('Destroying system tray')
     tray.destroy()

@@ -21,6 +21,10 @@ class PollingService {
   private containerPollingWebContents: WebContents | null = null
   private statsSubscriptions = new Map<string, StatsSubscription>()
 
+  resetAdapter(): void {
+    this.adapter = null
+  }
+
   private async getAdapter(): Promise<ContainerCLIAdapter> {
     if (!this.adapter) {
       this.adapter = await createCLIAdapter()

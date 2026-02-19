@@ -11,6 +11,10 @@ const log = logger.scope('NetworkService')
 class NetworkService {
   private adapter: ContainerCLIAdapter | null = null
 
+  resetAdapter(): void {
+    this.adapter = null
+  }
+
   private async getAdapter(): Promise<ContainerCLIAdapter> {
     if (!this.adapter) {
       this.adapter = await createCLIAdapter()
@@ -47,7 +51,11 @@ class NetworkService {
   }
 
   /** 네트워크에 컨테이너 연결 (CLI 레벨에서 직접 구현 필요) */
-  async connectContainer(network: string, container: string, options?: { ip?: string; alias?: string[] }) {
+  async connectContainer(
+    network: string,
+    container: string,
+    options?: { ip?: string; alias?: string[] }
+  ) {
     log.info('connectContainer', { network, container, ...options })
     // RealContainerCLI에 connect 메서드 추가 필요
     // 현재는 placeholder

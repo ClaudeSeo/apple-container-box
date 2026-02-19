@@ -30,7 +30,8 @@ const containersAPI = {
   }) => ipcRenderer.invoke('container:run', options),
   stop: (id: string, timeout?: number) => ipcRenderer.invoke('container:stop', { id, timeout }),
   start: (id: string) => ipcRenderer.invoke('container:start', { id }),
-  restart: (id: string, timeout?: number) => ipcRenderer.invoke('container:restart', { id, timeout }),
+  restart: (id: string, timeout?: number) =>
+    ipcRenderer.invoke('container:restart', { id, timeout }),
   remove: (id: string, force?: boolean) => ipcRenderer.invoke('container:remove', { id, force }),
   inspect: (id: string) => ipcRenderer.invoke('container:inspect', { id }),
   logs: (id: string, options?: { tail?: number; timestamps?: boolean }) =>
@@ -206,7 +207,24 @@ const systemAPI = {
 const settingsAPI = {
   get: () => ipcRenderer.invoke('settings:get'),
   set: (settings: Record<string, unknown>) => ipcRenderer.invoke('settings:set', settings),
-  reset: () => ipcRenderer.invoke('settings:reset')
+  reset: () => ipcRenderer.invoke('settings:reset'),
+  onChanged: (callback: IPCListener<unknown>): Unsubscribe => {
+    const handler = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data)
+    ipcRenderer.on('settings:changed', handler)
+    return () => {
+      ipcRenderer.removeListener('settings:changed', handler)
+    }
+  }
+}
+
+const trayAPI = {
+  onRefreshContainers: (callback: IPCListener<void>): Unsubscribe => {
+    const handler = () => callback(undefined)
+    ipcRenderer.on('tray:refresh-containers', handler)
+    return () => {
+      ipcRenderer.removeListener('tray:refresh-containers', handler)
+    }
+  }
 }
 
 /**
@@ -243,7 +261,12 @@ const notificationAPI = {
   ): Unsubscribe => {
     const handler = (
       _event: Electron.IpcRendererEvent,
-      data: { type: 'info' | 'success' | 'warning' | 'error'; title: string; message: string; timestamp: number }
+      data: {
+        type: 'info' | 'success' | 'warning' | 'error'
+        title: string
+        message: string
+        timestamp: number
+      }
     ) => callback(data)
     ipcRenderer.on('notification', handler)
     return () => {
@@ -261,6 +284,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   streams: streamsAPI,
   system: systemAPI,
   settings: settingsAPI,
+  tray: trayAPI,
   window: windowAPI,
   notifications: notificationAPI
 })

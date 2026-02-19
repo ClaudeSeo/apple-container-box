@@ -32,10 +32,13 @@ export function useSettings(): UseSettingsReturn {
     }
   }, [])
 
-  const updateSettings = useCallback(async (newSettings: Partial<AppSettings>) => {
-    await window.electronAPI.settings.set(newSettings)
-    await fetchSettings()
-  }, [fetchSettings])
+  const updateSettings = useCallback(
+    async (newSettings: Partial<AppSettings>) => {
+      await window.electronAPI.settings.set(newSettings)
+      await fetchSettings()
+    },
+    [fetchSettings]
+  )
 
   const resetSettings = useCallback(async () => {
     const defaultSettings = await window.electronAPI.settings.reset()
@@ -71,8 +74,8 @@ export function useCLIStatus() {
   const checkCLI = useCallback(async () => {
     setLoading(true)
     try {
-      const available = await window.electronAPI.system.checkCLI()
-      setStatus({ available })
+      const cliStatus = await window.electronAPI.system.checkCLI()
+      setStatus(cliStatus)
     } catch {
       setStatus({ available: false, error: 'Failed to check CLI' })
     } finally {

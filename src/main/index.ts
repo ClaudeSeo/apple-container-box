@@ -15,11 +15,13 @@ import {
   WINDOW_MIN_HEIGHT
 } from './utils/constants'
 import { registerAllHandlers, setupWindowStateEvents, cleanupStreams } from './ipc'
-import { createTray, destroyTray } from './tray'
+import { createTray, destroyTray, hasTray } from './tray'
 import { settingsStore } from './store/settings.store'
+import { setupApplicationMenu } from './menu/app-menu'
 
 /** 메인 윈도우 참조 */
 let mainWindow: BrowserWindow | null = null
+let isQuitting = false
 
 /** 앱 윈도우 생성 */
 function createWindow(): void {
@@ -53,6 +55,18 @@ function createWindow(): void {
 
   // 윈도우 상태 이벤트 설정
   setupWindowStateEvents(mainWindow)
+
+  mainWindow.on('close', (event) => {
+    if (isQuitting) {
+      return
+    }
+
+    const settings = settingsStore.get()
+    if (settings.minimizeToTray && hasTray()) {
+      event.preventDefault()
+      mainWindow?.hide()
+    }
+  })
 
   // 외부 링크는 기본 브라우저에서 열기
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -145,8 +159,15 @@ app.whenReady().then(() => {
   // 윈도우 생성
   createWindow()
 
-  // 시스템 트레이 생성 (설정에 따라)
+  if (mainWindow) {
+    setupApplicationMenu(mainWindow)
+  }
+
+  // 런타임 설정 적용
   const settings = settingsStore.get()
+  app.setLoginItemSettings({ openAtLogin: settings.autoLaunch })
+
+  // 시스템 트레이 생성 (설정에 따라)
   if (settings.showTrayIcon && mainWindow) {
     createTray(mainWindow)
   }
@@ -155,6 +176,14 @@ app.whenReady().then(() => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow()
+      if (mainWindow) {
+        setupApplicationMenu(mainWindow)
+      }
+
+      const nextSettings = settingsStore.get()
+      if (nextSettings.showTrayIcon && mainWindow) {
+        createTray(mainWindow)
+      }
     }
   })
 })
@@ -168,6 +197,7 @@ app.on('window-all-closed', () => {
 
 /** 앱 종료 전 정리 */
 app.on('before-quit', () => {
+  isQuitting = true
   logger.info('App quitting...')
   cleanupStreams()
   destroyTray()

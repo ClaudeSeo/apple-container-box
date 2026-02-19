@@ -31,6 +31,10 @@ class StreamService {
   private logStreams = new Map<string, StreamSession>()
   private execSessions = new Map<string, ExecSession>()
 
+  resetAdapter(): void {
+    this.adapter = null
+  }
+
   private async getAdapter(): Promise<ContainerCLIAdapter> {
     if (!this.adapter) {
       this.adapter = await createCLIAdapter()

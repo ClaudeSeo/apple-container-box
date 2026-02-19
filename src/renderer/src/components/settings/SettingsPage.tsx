@@ -3,16 +3,14 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Settings, Monitor, Bell, Terminal, RefreshCw, RotateCcw, Save, Check } from 'lucide-react'
+import { Settings, Terminal, RefreshCw, RotateCcw, Save, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useSettings, useCLIStatus } from '@/hooks/useSettings'
-import type { AppSettings, ThemeMode } from '@/types'
+import type { AppSettings } from '@/types'
 
 export function SettingsPage() {
   const { settings, loading, updateSettings, resetSettings } = useSettings()
@@ -105,7 +103,7 @@ export function SettingsPage() {
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-6 space-y-8 max-w-2xl">
+        <div className="p-6 space-y-8 max-w-5xl">
           {/* General */}
           <section className="space-y-4 bg-card border border-border rounded-xl p-4">
             <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
@@ -115,9 +113,7 @@ export function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="auto-launch">Auto Launch</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Start application on system login
-                  </p>
+                  <p className="text-xs text-muted-foreground">Start application on system login</p>
                 </div>
                 <Switch
                   id="auto-launch"
@@ -154,60 +150,6 @@ export function SettingsPage() {
             </div>
           </section>
 
-          <Separator />
-
-          {/* Appearance */}
-          <section className="space-y-4 bg-card border border-border rounded-xl p-4">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <Monitor className="w-4 h-4" />
-              Appearance
-            </h3>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Theme</Label>
-                <RadioGroup
-                  value={localSettings.display.theme}
-                  onValueChange={(value) =>
-                    updateLocalNested('display', 'theme', value as ThemeMode)
-                  }
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="dark" id="theme-dark" />
-                    <Label htmlFor="theme-dark" className="font-normal">
-                      Dark
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="light" id="theme-light" />
-                    <Label htmlFor="theme-light" className="font-normal">
-                      Light
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="system" id="theme-system" />
-                    <Label htmlFor="theme-system" className="font-normal">
-                      System
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="compact-mode">Compact Mode</Label>
-                  <p className="text-xs text-muted-foreground">Use smaller UI elements</p>
-                </div>
-                <Switch
-                  id="compact-mode"
-                  checked={localSettings.display.compactMode}
-                  onCheckedChange={(checked) => updateLocalNested('display', 'compactMode', checked)}
-                />
-              </div>
-            </div>
-          </section>
-
-          <Separator />
-
           {/* CLI Settings */}
           <section className="space-y-4 bg-card border border-border rounded-xl p-4">
             <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
@@ -235,12 +177,12 @@ export function SettingsPage() {
                 {cliStatus?.path && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Version</span>
-                    <span className="text-sm text-muted-foreground font-mono">{cliStatus.path}</span>
+                    <span className="ml-4 text-right text-sm text-muted-foreground font-mono break-all">
+                      {cliStatus.path}
+                    </span>
                   </div>
                 )}
-                {cliStatus?.error && (
-                  <p className="text-sm text-destructive">{cliStatus.error}</p>
-                )}
+                {cliStatus?.error && <p className="text-sm text-destructive">{cliStatus.error}</p>}
                 <Button
                   variant="outline"
                   size="sm"
@@ -259,11 +201,11 @@ export function SettingsPage() {
                   id="cli-path"
                   placeholder="/usr/local/bin/container"
                   value={localSettings.cli.customPath || ''}
-                  onChange={(e) => updateLocalNested('cli', 'customPath', e.target.value || undefined)}
+                  onChange={(e) =>
+                    updateLocalNested('cli', 'customPath', e.target.value || undefined)
+                  }
                 />
-                <p className="text-xs text-muted-foreground">
-                  Leave empty for auto-detection
-                </p>
+                <p className="text-xs text-muted-foreground">Leave empty for auto-detection</p>
               </div>
 
               <div className="space-y-2">
@@ -275,82 +217,14 @@ export function SettingsPage() {
                   max={10000}
                   step={500}
                   value={localSettings.refreshInterval}
-                  onChange={(e) => updateLocal('refreshInterval', parseInt(e.target.value) || 2000)}
+                  onChange={(e) => {
+                    const value = Number.parseInt(e.target.value, 10)
+                    updateLocal('refreshInterval', Number.isFinite(value) ? value : 2000)
+                  }}
                 />
                 <p className="text-xs text-muted-foreground">
                   Container list polling interval (500-10000ms)
                 </p>
-              </div>
-            </div>
-          </section>
-
-          <Separator />
-
-          {/* Notifications */}
-          <section className="space-y-4 bg-card border border-border rounded-xl p-4">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <Bell className="w-4 h-4" />
-              Notifications
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="notifications-enabled">Enable Notifications</Label>
-                  <p className="text-xs text-muted-foreground">Show desktop notifications</p>
-                </div>
-                <Switch
-                  id="notifications-enabled"
-                  checked={localSettings.notifications.enabled}
-                  onCheckedChange={(checked) =>
-                    updateLocalNested('notifications', 'enabled', checked)
-                  }
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="notify-status">Status Change Alerts</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Notify when container status changes
-                  </p>
-                </div>
-                <Switch
-                  id="notify-status"
-                  checked={localSettings.notifications.onStatusChange}
-                  onCheckedChange={(checked) =>
-                    updateLocalNested('notifications', 'onStatusChange', checked)
-                  }
-                  disabled={!localSettings.notifications.enabled}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="notify-pull">Image Pull Alerts</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Notify when image pull completes
-                  </p>
-                </div>
-                <Switch
-                  id="notify-pull"
-                  checked={localSettings.notifications.onImagePull}
-                  onCheckedChange={(checked) =>
-                    updateLocalNested('notifications', 'onImagePull', checked)
-                  }
-                  disabled={!localSettings.notifications.enabled}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="notify-error">Error Alerts</Label>
-                  <p className="text-xs text-muted-foreground">Notify on errors</p>
-                </div>
-                <Switch
-                  id="notify-error"
-                  checked={localSettings.notifications.onError}
-                  onCheckedChange={(checked) =>
-                    updateLocalNested('notifications', 'onError', checked)
-                  }
-                  disabled={!localSettings.notifications.enabled}
-                />
               </div>
             </div>
           </section>

@@ -8,17 +8,6 @@ import { logger } from '../utils/logger'
 
 const log = logger.scope('SettingsStore')
 
-/** 테마 모드 */
-export type ThemeMode = 'dark' | 'light' | 'system'
-
-/** 알림 설정 */
-export interface NotificationSettings {
-  enabled: boolean
-  onStatusChange: boolean
-  onImagePull: boolean
-  onError: boolean
-}
-
 /** CLI 설정 */
 export interface CLISettings {
   mode: 'auto' | 'custom'
@@ -27,22 +16,12 @@ export interface CLISettings {
   version?: string
 }
 
-/** 화면 표시 설정 */
-export interface DisplaySettings {
-  theme: ThemeMode
-  sidebarWidth: number
-  detailPanelWidth: number
-  compactMode: boolean
-}
-
 /** 앱 설정 */
 export interface AppSettings {
   autoLaunch: boolean
   showTrayIcon: boolean
   minimizeToTray: boolean
-  notifications: NotificationSettings
   cli: CLISettings
-  display: DisplaySettings
   refreshInterval: number
 }
 
@@ -51,23 +30,14 @@ const DEFAULT_SETTINGS: AppSettings = {
   autoLaunch: false,
   showTrayIcon: true,
   minimizeToTray: true,
-  notifications: {
-    enabled: true,
-    onStatusChange: true,
-    onImagePull: true,
-    onError: true
-  },
   cli: {
     mode: 'auto'
   },
-  display: {
-    theme: 'dark',
-    sidebarWidth: 240,
-    detailPanelWidth: 400,
-    compactMode: false
-  },
   refreshInterval: 2000
 }
+
+const MIN_REFRESH_INTERVAL = 500
+const MAX_REFRESH_INTERVAL = 10000
 
 /** 윈도우 bounds */
 export interface WindowBounds {
@@ -114,14 +84,18 @@ const store = new Store({
 export const settingsStore = {
   /** 전체 설정 가져오기 */
   get(): AppSettings {
-    return store.get('settings')
+    const current = store.get('settings')
+    const sanitized = sanitizeSettings(current)
+    store.set('settings', sanitized)
+    return sanitized
   },
 
   /** 설정 업데이트 (부분 업데이트 지원) */
   set(settings: Partial<AppSettings>): void {
-    const current = store.get('settings')
+    const current = this.get()
     const merged = deepMerge(current, settings)
-    store.set('settings', merged)
+    const sanitized = sanitizeSettings(merged)
+    store.set('settings', sanitized)
     log.info('Settings updated', settings)
   },
 
@@ -140,9 +114,9 @@ export const settingsStore = {
 
   /** 특정 키 설정 */
   setKey<K extends keyof AppSettings>(key: K, value: AppSettings[K]): void {
-    const settings = store.get('settings')
+    const settings = this.get()
     settings[key] = value
-    store.set('settings', settings)
+    store.set('settings', sanitizeSettings(settings))
   },
 
   /** 윈도우 bounds 가져오기 */
@@ -185,3 +159,29 @@ function deepMerge<T extends object>(target: T, source: Partial<T>): T {
 }
 
 export default settingsStore
+
+function sanitizeSettings(raw: AppSettings): AppSettings {
+  const source = raw as Partial<AppSettings>
+  const cli = source.cli ?? { mode: 'auto' }
+  const refreshValue = typeof source.refreshInterval === 'number' ? source.refreshInterval : NaN
+
+  const refreshInterval =
+    Number.isFinite(refreshValue) &&
+    refreshValue >= MIN_REFRESH_INTERVAL &&
+    refreshValue <= MAX_REFRESH_INTERVAL
+      ? refreshValue
+      : DEFAULT_SETTINGS.refreshInterval
+
+  const customPath = cli.customPath?.trim()
+
+  return {
+    autoLaunch: Boolean(source.autoLaunch),
+    showTrayIcon: Boolean(source.showTrayIcon),
+    minimizeToTray: Boolean(source.minimizeToTray),
+    cli: {
+      mode: customPath ? 'custom' : 'auto',
+      customPath: customPath ? customPath : undefined
+    },
+    refreshInterval
+  }
+}

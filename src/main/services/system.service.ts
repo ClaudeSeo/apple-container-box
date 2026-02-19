@@ -15,6 +15,10 @@ class SystemService {
   private adapter: ContainerCLIAdapter | null = null
   private previousCpuTimes: { idle: number; total: number } | null = null
 
+  resetAdapter(): void {
+    this.adapter = null
+  }
+
   private async getAdapter(): Promise<ContainerCLIAdapter> {
     if (!this.adapter) {
       this.adapter = await createCLIAdapter()
@@ -23,7 +27,12 @@ class SystemService {
   }
 
   /** CLI 가용성 확인 */
-  async checkCLI(): Promise<{ available: boolean; path?: string; error?: string; isMock?: boolean }> {
+  async checkCLI(): Promise<{
+    available: boolean
+    path?: string
+    error?: string
+    isMock?: boolean
+  }> {
     log.debug('checkCLI')
     try {
       const adapter = await this.getAdapter()

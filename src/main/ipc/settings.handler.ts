@@ -2,9 +2,12 @@
  * Settings IPC 핸들러
  */
 
-import { ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
 import { settingsStore, type AppSettings } from '../store/settings.store'
 import { logger } from '../utils/logger'
+import { createTray, destroyTray, hasTray } from '../tray'
+import { resetCLIAdapter } from '../cli'
+import { resetAllServiceAdapters } from '../services'
 
 const log = logger.scope('SettingsHandler')
 
@@ -22,8 +25,21 @@ export function registerSettingsHandlers(): void {
   // 설정 업데이트
   ipcMain.handle('settings:set', async (_, settings: Partial<AppSettings>) => {
     try {
+      const previous = settingsStore.get()
       settingsStore.set(settings)
-      return settingsStore.get()
+      const updated = settingsStore.get()
+
+      applyRuntimeSettings(updated)
+
+      const cliPathChanged =
+        previous.cli.mode !== updated.cli.mode || previous.cli.customPath !== updated.cli.customPath
+      if (cliPathChanged) {
+        resetCLIAdapter()
+        resetAllServiceAdapters()
+      }
+
+      notifySettingsChanged(updated)
+      return updated
     } catch (error) {
       log.error('settings:set failed', error)
       throw error
@@ -33,7 +49,12 @@ export function registerSettingsHandlers(): void {
   // 설정 초기화
   ipcMain.handle('settings:reset', async () => {
     try {
-      return settingsStore.reset()
+      const reset = settingsStore.reset()
+      applyRuntimeSettings(reset)
+      resetCLIAdapter()
+      resetAllServiceAdapters()
+      notifySettingsChanged(reset)
+      return reset
     } catch (error) {
       log.error('settings:reset failed', error)
       throw error
@@ -41,4 +62,29 @@ export function registerSettingsHandlers(): void {
   })
 
   log.info('Settings handlers registered')
+}
+
+function applyRuntimeSettings(settings: AppSettings): void {
+  app.setLoginItemSettings({ openAtLogin: settings.autoLaunch })
+
+  const mainWindow = BrowserWindow.getAllWindows()[0]
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return
+  }
+
+  if (settings.showTrayIcon && !hasTray()) {
+    createTray(mainWindow)
+    return
+  }
+
+  if (!settings.showTrayIcon && hasTray()) {
+    destroyTray()
+  }
+}
+
+function notifySettingsChanged(settings: AppSettings): void {
+  const mainWindow = BrowserWindow.getAllWindows()[0]
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('settings:changed', settings)
+  }
 }

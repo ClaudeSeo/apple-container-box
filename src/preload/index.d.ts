@@ -67,7 +67,11 @@ interface NetworkAPI {
   create(name: string, driver?: string, subnet?: string): Promise<Network>
   remove(id: string, force?: boolean): Promise<void>
   inspect(id: string): Promise<Network>
-  connect(network: string, container: string, options?: { ip?: string; alias?: string[] }): Promise<void>
+  connect(
+    network: string,
+    container: string,
+    options?: { ip?: string; alias?: string[] }
+  ): Promise<void>
   disconnect(network: string, container: string, force?: boolean): Promise<void>
 }
 
@@ -106,8 +110,13 @@ interface SystemAPI {
 /** Settings API */
 interface SettingsAPI {
   get(): Promise<AppSettings>
-  set(settings: Partial<AppSettings>): Promise<void>
+  set(settings: Partial<AppSettings>): Promise<AppSettings>
   reset(): Promise<AppSettings>
+  onChanged(callback: (settings: AppSettings) => void): Unsubscribe
+}
+
+interface TrayAPI {
+  onRefreshContainers(callback: () => void): Unsubscribe
 }
 
 /** Window API */
@@ -133,6 +142,7 @@ interface ElectronAPI {
   streams: StreamsAPI
   system: SystemAPI
   settings: SettingsAPI
+  tray: TrayAPI
   window: WindowAPI
   notifications: NotificationAPI
 }

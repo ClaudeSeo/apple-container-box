@@ -63,7 +63,7 @@ export interface IPCInvokeChannels {
 
   // Settings
   'settings:get': { args: void; result: AppSettings }
-  'settings:set': { args: Partial<AppSettings>; result: void }
+  'settings:set': { args: Partial<AppSettings>; result: AppSettings }
   'settings:reset': { args: void; result: AppSettings }
 
   // Window
@@ -77,8 +77,10 @@ export interface IPCOnChannels {
   'container:stats': ContainerStats
   'container:logs:stream': { containerId: string; line: string }
   'image:pull:progress': ImagePullProgress
-  'notification': AppNotification
+  notification: AppNotification
   'cli:status': CLIStatusEvent
+  'settings:changed': AppSettings
+  'tray:refresh-containers': void
 }
 
 /** 시스템 정보 */

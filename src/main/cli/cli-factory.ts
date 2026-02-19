@@ -7,6 +7,7 @@ import type { ContainerCLIAdapter } from './adapter.interface'
 import { RealContainerCLI } from './real-cli.adapter'
 import { MockContainerCLI } from './mock-cli.adapter'
 import { logger } from '../utils/logger'
+import { settingsStore } from '../store/settings.store'
 
 const log = logger.scope('CLI-Factory')
 
@@ -30,8 +31,15 @@ export async function createCLIAdapter(): Promise<ContainerCLIAdapter> {
     return adapterInstance
   }
 
+  const settings = settingsStore.get()
+  const customPath = settings.cli.customPath || undefined
+
+  if (customPath) {
+    log.info(`Using custom CLI path preference: ${customPath}`)
+  }
+
   // Real CLI 가용성 확인
-  const realCLI = new RealContainerCLI()
+  const realCLI = new RealContainerCLI(customPath)
   try {
     const available = await realCLI.checkCLIAvailable()
     if (available) {

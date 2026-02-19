@@ -11,6 +11,10 @@ const log = logger.scope('VolumeService')
 class VolumeService {
   private adapter: ContainerCLIAdapter | null = null
 
+  resetAdapter(): void {
+    this.adapter = null
+  }
+
   private async getAdapter(): Promise<ContainerCLIAdapter> {
     if (!this.adapter) {
       this.adapter = await createCLIAdapter()

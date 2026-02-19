@@ -51,10 +51,7 @@ declare global {
         restart: (id: string, timeout?: number) => Promise<void>
         remove: (id: string, force?: boolean) => Promise<void>
         inspect: (id: string) => Promise<import('./types').Container>
-        logs: (
-          id: string,
-          options?: { tail?: number; timestamps?: boolean }
-        ) => Promise<string>
+        logs: (id: string, options?: { tail?: number; timestamps?: boolean }) => Promise<string>
         exec: (id: string, command: string[]) => Promise<{ output: string }>
       }
 
@@ -92,10 +89,7 @@ declare global {
       }
 
       streams: {
-        onLogs: (
-          containerId: string,
-          callback: IPCListener<{ line: string }>
-        ) => Unsubscribe
+        onLogs: (containerId: string, callback: IPCListener<{ line: string }>) => Unsubscribe
         onStats: (
           containerId: string,
           callback: IPCListener<{
@@ -121,7 +115,12 @@ declare global {
       }
 
       system: {
-        checkCLI: () => Promise<boolean>
+        checkCLI: () => Promise<{
+          available: boolean
+          path?: string
+          error?: string
+          isMock?: boolean
+        }>
         getInfo: () => Promise<import('./types').SystemInfo>
         getVersion: () => Promise<import('./types').CLIVersion>
         prune: (options?: { volumes?: boolean }) => Promise<import('./types').PruneResult>
@@ -133,8 +132,15 @@ declare global {
 
       settings: {
         get: () => Promise<import('./types').AppSettings>
-        set: (settings: Partial<import('./types').AppSettings>) => Promise<void>
+        set: (
+          settings: Partial<import('./types').AppSettings>
+        ) => Promise<import('./types').AppSettings>
         reset: () => Promise<import('./types').AppSettings>
+        onChanged: (callback: IPCListener<import('./types').AppSettings>) => Unsubscribe
+      }
+
+      tray: {
+        onRefreshContainers: (callback: () => void) => Unsubscribe
       }
 
       window: {
