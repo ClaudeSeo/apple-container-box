@@ -79,7 +79,7 @@ export function ContainerStats({ containerId }: ContainerStatsProps): JSX.Elemen
                     borderRadius: '8px'
                   }}
                   labelStyle={{ color: '#e5e7eb' }}
-                  formatter={(value: number) => `${value.toFixed(1)}%`}
+                  formatter={(value: number | undefined) => (value != null ? `${value.toFixed(1)}%` : '')}
                 />
                 <Line
                   type="monotone"
@@ -119,7 +119,7 @@ export function ContainerStats({ containerId }: ContainerStatsProps): JSX.Elemen
                     borderRadius: '8px'
                   }}
                   labelStyle={{ color: '#e5e7eb' }}
-                  formatter={(value: number) => `${value.toFixed(1)}%`}
+                  formatter={(value: number | undefined) => (value != null ? `${value.toFixed(1)}%` : '')}
                 />
                 <Line
                   type="monotone"

@@ -1,3 +1,18 @@
+import type React from 'react'
+
+// React 19 호환성: 전역 JSX 네임스페이스 재선언
+declare global {
+  namespace JSX {
+    type Element = React.JSX.Element
+    type IntrinsicElements = React.JSX.IntrinsicElements
+    type IntrinsicAttributes = React.JSX.IntrinsicAttributes
+    interface ElementAttributesProperty extends React.JSX.ElementAttributesProperty {}
+    interface ElementChildrenAttribute extends React.JSX.ElementChildrenAttribute {}
+    type LibraryManagedAttributes<C, P> = React.JSX.LibraryManagedAttributes<C, P>
+    interface IntrinsicClassAttributes<T> extends React.JSX.IntrinsicClassAttributes<T> {}
+  }
+}
+
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
