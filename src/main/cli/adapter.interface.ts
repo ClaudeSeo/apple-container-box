@@ -150,6 +150,12 @@ export interface ContainerCLIAdapter {
   createNetwork(name: string, driver?: string, subnet?: string): Promise<CLINetwork>
   deleteNetwork(id: string, force?: boolean): Promise<void>
   inspectNetwork(id: string): Promise<CLINetwork>
+  connectNetwork(
+    network: string,
+    container: string,
+    options?: { ip?: string; alias?: string[] }
+  ): Promise<void>
+  disconnectNetwork(network: string, container: string, force?: boolean): Promise<void>
 
   // 시스템
   checkCLIAvailable(): Promise<boolean>

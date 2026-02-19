@@ -378,6 +378,38 @@ export class MockContainerCLI implements ContainerCLIAdapter {
     return network
   }
 
+  async connectNetwork(
+    network: string,
+    container: string,
+    options?: { ip?: string; alias?: string[] }
+  ): Promise<void> {
+    await this.delay(50)
+    const target = this.networks.find((n) => n.id === network || n.name === network)
+    if (!target) throw new Error(`Network not found: ${network}`)
+
+    const tags = [
+      container,
+      ...(options?.ip ? [`ip:${options.ip}`] : []),
+      ...(options?.alias ?? []).map((alias) => `alias:${alias}`)
+    ]
+
+    const containers = target.containers ?? []
+    for (const tag of tags) {
+      if (!containers.includes(tag)) {
+        containers.push(tag)
+      }
+    }
+    target.containers = containers
+  }
+
+  async disconnectNetwork(network: string, container: string): Promise<void> {
+    await this.delay(50)
+    const target = this.networks.find((n) => n.id === network || n.name === network)
+    if (!target) throw new Error(`Network not found: ${network}`)
+    if (!target.containers) return
+    target.containers = target.containers.filter((entry) => entry !== container)
+  }
+
   async checkCLIAvailable(): Promise<boolean> {
     return true
   }

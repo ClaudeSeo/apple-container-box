@@ -4,7 +4,10 @@
  */
 
 import Store from 'electron-store'
+import { accessSync, constants as fsConstants, statSync } from 'node:fs'
+import { basename, isAbsolute, normalize } from 'node:path'
 import { logger } from '../utils/logger'
+import { CLI_BINARY } from '../utils/constants'
 
 const log = logger.scope('SettingsStore')
 
@@ -38,6 +41,8 @@ const DEFAULT_SETTINGS: AppSettings = {
 
 const MIN_REFRESH_INTERVAL = 500
 const MAX_REFRESH_INTERVAL = 10000
+const UNSAFE_PATH_CHARS_PATTERN = /[\0\r\n]/
+const UNSAFE_PATH_METACHARS_PATTERN = /[;&|><`$]/
 
 /** 윈도우 bounds */
 export interface WindowBounds {
@@ -180,7 +185,7 @@ function sanitizeSettings(raw: AppSettings): AppSettings {
       ? refreshValue
       : DEFAULT_SETTINGS.refreshInterval
 
-  const customPath = cli.customPath?.trim()
+  const customPath = sanitizeCustomCLIPath(cli.customPath)
 
   return {
     autoLaunch: Boolean(source.autoLaunch),
@@ -192,4 +197,41 @@ function sanitizeSettings(raw: AppSettings): AppSettings {
     },
     refreshInterval
   }
+}
+
+function sanitizeCustomCLIPath(rawPath: string | undefined): string | undefined {
+  const trimmed = rawPath?.trim()
+  if (!trimmed) return undefined
+
+  if (UNSAFE_PATH_CHARS_PATTERN.test(trimmed) || UNSAFE_PATH_METACHARS_PATTERN.test(trimmed)) {
+    log.warn('Invalid custom CLI path: unsafe characters detected')
+    return undefined
+  }
+
+  if (!isAbsolute(trimmed)) {
+    log.warn('Invalid custom CLI path: absolute path required')
+    return undefined
+  }
+
+  const normalized = normalize(trimmed)
+  const executableName = basename(normalized).toLowerCase()
+
+  if (executableName !== CLI_BINARY && executableName !== `${CLI_BINARY}.exe`) {
+    log.warn('Invalid custom CLI path: unexpected executable name')
+    return undefined
+  }
+
+  try {
+    const stat = statSync(normalized)
+    if (!stat.isFile()) {
+      log.warn('Invalid custom CLI path: not a regular file')
+      return undefined
+    }
+    accessSync(normalized, fsConstants.X_OK)
+  } catch {
+    log.warn('Invalid custom CLI path: file not executable')
+    return undefined
+  }
+
+  return normalized
 }

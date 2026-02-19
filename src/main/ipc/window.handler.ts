@@ -4,18 +4,21 @@
 
 import { ipcMain, BrowserWindow } from 'electron'
 import { logger } from '../utils/logger'
+import { assertTrustedIpcSender } from './security'
 
 const log = logger.scope('WindowHandler')
 
 export function registerWindowHandlers(): void {
   // 윈도우 최소화
   ipcMain.handle('window:minimize', async (event) => {
+    assertTrustedIpcSender(event, 'window:minimize')
     const window = BrowserWindow.fromWebContents(event.sender)
     window?.minimize()
   })
 
   // 윈도우 최대화/복원 토글
   ipcMain.handle('window:maximize', async (event) => {
+    assertTrustedIpcSender(event, 'window:maximize')
     const window = BrowserWindow.fromWebContents(event.sender)
     if (window) {
       if (window.isMaximized()) {
@@ -28,12 +31,14 @@ export function registerWindowHandlers(): void {
 
   // 윈도우 닫기
   ipcMain.handle('window:close', async (event) => {
+    assertTrustedIpcSender(event, 'window:close')
     const window = BrowserWindow.fromWebContents(event.sender)
     window?.close()
   })
 
   // 윈도우 최대화 상태 확인
   ipcMain.handle('window:isMaximized', async (event) => {
+    assertTrustedIpcSender(event, 'window:isMaximized')
     const window = BrowserWindow.fromWebContents(event.sender)
     return window?.isMaximized() ?? false
   })

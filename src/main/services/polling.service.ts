@@ -13,6 +13,7 @@ const log = logger.scope('PollingService')
 interface StatsSubscription {
   webContents: WebContents
   timer: NodeJS.Timeout
+  inFlight: boolean
 }
 
 class PollingService {
@@ -42,25 +43,31 @@ class PollingService {
     log.info('Starting stats polling', { containerId, interval: POLLING_INTERVAL_STATS })
 
     // 즉시 한 번 실행
-    this.pollStats(containerId, webContents)
+    void this.pollStats(containerId, webContents)
 
     // 주기적 폴링
     const timer = setInterval(() => {
-      this.pollStats(containerId, webContents)
+      void this.pollStats(containerId, webContents)
     }, POLLING_INTERVAL_STATS)
 
-    this.statsSubscriptions.set(containerId, { webContents, timer })
+    this.statsSubscriptions.set(containerId, { webContents, timer, inFlight: false })
   }
 
   /**
    * Stats 폴링 실행
    */
   private async pollStats(containerId: string, webContents: WebContents): Promise<void> {
+    const subscription = this.statsSubscriptions.get(containerId)
+    if (!subscription || subscription.inFlight) {
+      return
+    }
+
     if (webContents.isDestroyed()) {
       this.stopStatsPolling(containerId)
       return
     }
 
+    subscription.inFlight = true
     try {
       const adapter = await this.getAdapter()
       const stats = await adapter.getContainerStats(containerId)
@@ -76,6 +83,11 @@ class PollingService {
       log.error('Stats polling failed', { containerId, error })
       // 에러 시 구독 중지
       this.stopStatsPolling(containerId)
+    } finally {
+      const current = this.statsSubscriptions.get(containerId)
+      if (current === subscription) {
+        current.inFlight = false
+      }
     }
   }
 

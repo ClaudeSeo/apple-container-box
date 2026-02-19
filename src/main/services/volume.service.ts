@@ -3,16 +3,24 @@
  * Volume 관련 비즈니스 로직
  */
 
-import { createCLIAdapter, type ContainerCLIAdapter } from '../cli'
+import { createCLIAdapter, type CLIVolume, type ContainerCLIAdapter } from '../cli'
 import { logger } from '../utils/logger'
 
 const log = logger.scope('VolumeService')
+const VOLUME_CREATED_AT_CACHE_TTL_MS = 60_000
+
+interface VolumeCreatedAtCacheEntry {
+  value: string
+  expiresAt: number
+}
 
 class VolumeService {
   private adapter: ContainerCLIAdapter | null = null
+  private volumeCreatedAtCache = new Map<string, VolumeCreatedAtCacheEntry>()
 
   resetAdapter(): void {
     this.adapter = null
+    this.volumeCreatedAtCache.clear()
   }
 
   private async getAdapter(): Promise<ContainerCLIAdapter> {
@@ -22,41 +30,52 @@ class VolumeService {
     return this.adapter
   }
 
-  /** 볼륨 목록 조회 (inspect 병렬 호출로 createdAt 보강) */
+  /** 볼륨 목록 조회 */
   async listVolumes() {
     log.debug('listVolumes')
     const adapter = await this.getAdapter()
     const volumes = await adapter.listVolumes()
+    const now = Date.now()
 
-    const results = await Promise.allSettled(
+    const activeNames = new Set(volumes.map((volume) => volume.name))
+    for (const [name, entry] of this.volumeCreatedAtCache) {
+      if (entry.expiresAt <= now || !activeNames.has(name)) {
+        this.volumeCreatedAtCache.delete(name)
+      }
+    }
+
+    const enrichedVolumes = await Promise.all(
       volumes.map(async (volume) => {
-        try {
-          const raw = (await adapter.inspectVolumeRaw(volume.name)) as Record<string, unknown>[]
-          const createdAt = this.extractVolumeCreatedAt(raw?.[0])
-          if (createdAt) {
-            return { ...volume, createdAt }
-          }
-        } catch {
-          // inspect 실패 시 기존 데이터 유지
+        const cached = this.volumeCreatedAtCache.get(volume.name)
+        if (cached && cached.expiresAt > now) {
+          return {
+            ...volume,
+            createdAt: cached.value
+          } satisfies CLIVolume
         }
-        return volume
+
+        try {
+          const inspected = await adapter.inspectVolume(volume.name)
+          const createdAt = inspected.createdAt || volume.createdAt
+          this.volumeCreatedAtCache.set(volume.name, {
+            value: createdAt,
+            expiresAt: now + VOLUME_CREATED_AT_CACHE_TTL_MS
+          })
+          return {
+            ...volume,
+            createdAt
+          } satisfies CLIVolume
+        } catch (error) {
+          log.warn('listVolumes inspectVolume failed', {
+            name: volume.name,
+            error: error instanceof Error ? error.message : String(error)
+          })
+          return volume
+        }
       })
     )
 
-    return results.map((r, i) => (r.status === 'fulfilled' ? r.value : volumes[i]))
-  }
-
-  /** inspect JSON에서 createdAt ISO 문자열 추출 */
-  private extractVolumeCreatedAt(raw: Record<string, unknown> | undefined): string | undefined {
-    const ts = raw?.createdAt
-    if (typeof ts === 'number' && ts > 0) {
-      // Volume createdAt은 Unix epoch 초 단위 (parser.ts:193 참고)
-      return new Date(ts * 1000).toISOString()
-    }
-    if (typeof ts === 'string' && ts) {
-      return ts
-    }
-    return undefined
+    return enrichedVolumes
   }
 
   /** 볼륨 생성 */

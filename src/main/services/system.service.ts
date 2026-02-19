@@ -14,6 +14,7 @@ const log = logger.scope('SystemService')
 class SystemService {
   private adapter: ContainerCLIAdapter | null = null
   private previousCpuTimes: { idle: number; total: number } | null = null
+  private diskUsageCache: { diskUsed: number; diskTotal: number; cachedAt: number } | null = null
 
   resetAdapter(): void {
     this.adapter = null
@@ -178,12 +179,24 @@ class SystemService {
     const memoryTotal = os.totalmem()
     const memoryUsed = memoryTotal - os.freemem()
 
-    // 디스크 (루트 파티션)
-    const stat = fs.statfsSync('/')
+    const { diskUsed, diskTotal } = await this.getDiskUsage()
+
+    return { cpuUsage, memoryUsed, memoryTotal, diskUsed, diskTotal }
+  }
+
+  /** 디스크 사용량 조회 (30초 캐시) */
+  private async getDiskUsage(): Promise<{ diskUsed: number; diskTotal: number }> {
+    const now = Date.now()
+    if (this.diskUsageCache && now - this.diskUsageCache.cachedAt < 30000) {
+      return { diskUsed: this.diskUsageCache.diskUsed, diskTotal: this.diskUsageCache.diskTotal }
+    }
+
+    const stat = await fs.promises.statfs('/')
     const diskTotal = stat.blocks * stat.bsize
     const diskUsed = diskTotal - stat.bavail * stat.bsize
 
-    return { cpuUsage, memoryUsed, memoryTotal, diskUsed, diskTotal }
+    this.diskUsageCache = { diskUsed, diskTotal, cachedAt: now }
+    return { diskUsed, diskTotal }
   }
 }
 

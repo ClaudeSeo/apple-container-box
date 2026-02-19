@@ -4,16 +4,29 @@
  */
 
 import { BrowserWindow } from 'electron'
-import { createCLIAdapter, type ContainerCLIAdapter, type ImageBuildOptions } from '../cli'
+import {
+  createCLIAdapter,
+  type ContainerCLIAdapter,
+  type ImageBuildOptions,
+  validateImageRef
+} from '../cli'
 import { logger } from '../utils/logger'
 
 const log = logger.scope('ImageService')
+const IMAGE_CREATED_AT_CACHE_TTL_MS = 60_000
+
+interface ImageCreatedAtCacheEntry {
+  value: string
+  expiresAt: number
+}
 
 class ImageService {
   private adapter: ContainerCLIAdapter | null = null
+  private imageCreatedAtCache = new Map<string, ImageCreatedAtCacheEntry>()
 
   resetAdapter(): void {
     this.adapter = null
+    this.imageCreatedAtCache.clear()
   }
 
   private async getAdapter(): Promise<ContainerCLIAdapter> {
@@ -23,38 +36,85 @@ class ImageService {
     return this.adapter
   }
 
-  /** 이미지 목록 조회 (inspect 병렬 호출로 createdAt 보강) */
+  /** 이미지 목록 조회 */
   async listImages() {
     log.debug('listImages')
     const adapter = await this.getAdapter()
     const images = await adapter.listImages()
+    const now = Date.now()
 
-    // 각 이미지에 대해 inspect 병렬 호출
-    const results = await Promise.allSettled(
+    const enriched = await Promise.all(
       images.map(async (image) => {
-        try {
-          const ref = `${image.repository}:${image.tag}`
-          const raw = (await adapter.inspectImage(ref)) as Record<string, unknown>[]
-          // variants[0].config.created 경로에서 OCI created 필드 추출
-          const variant = raw?.[0]?.variants as Record<string, unknown>[] | undefined
-          const config = variant?.[0]?.config as Record<string, unknown> | undefined
-          const created = typeof config?.created === 'string' ? config.created : undefined
-          if (created) {
-            return { ...image, createdAt: created }
+        const ref = `${image.repository}:${image.tag}`
+        const cacheKey = image.id || ref
+        const cached = this.imageCreatedAtCache.get(cacheKey)
+        if (cached && cached.expiresAt > now) {
+          return {
+            ...image,
+            createdAt: cached.value
           }
-        } catch {
-          // inspect 실패 시 기존 데이터 유지
         }
-        return image
+
+        try {
+          const inspected = await adapter.inspectImage(ref)
+          const createdAt = this.extractImageCreatedAt(inspected) || image.createdAt
+          this.imageCreatedAtCache.set(cacheKey, {
+            value: createdAt,
+            expiresAt: now + IMAGE_CREATED_AT_CACHE_TTL_MS
+          })
+          return {
+            ...image,
+            createdAt
+          }
+        } catch (error) {
+          log.warn('listImages inspectImage failed', {
+            ref,
+            error: error instanceof Error ? error.message : String(error)
+          })
+          return image
+        }
       })
     )
 
-    return results.map((r, i) => (r.status === 'fulfilled' ? r.value : images[i]))
+    for (const [key, entry] of this.imageCreatedAtCache) {
+      if (entry.expiresAt <= now) {
+        this.imageCreatedAtCache.delete(key)
+      }
+    }
+
+    return enriched
+  }
+
+  private extractImageCreatedAt(raw: unknown): string | undefined {
+    const normalized = Array.isArray(raw) ? raw[0] : raw
+    if (!normalized || typeof normalized !== 'object') {
+      return undefined
+    }
+
+    const record = normalized as Record<string, unknown>
+
+    if (typeof record.createdAt === 'string' && record.createdAt) {
+      return record.createdAt
+    }
+    if (typeof record.created === 'string' && record.created) {
+      return record.created
+    }
+
+    const variant = Array.isArray(record.variants)
+      ? (record.variants[0] as Record<string, unknown> | undefined)
+      : undefined
+    const config = variant?.config as Record<string, unknown> | undefined
+    if (typeof config?.created === 'string' && config.created) {
+      return config.created
+    }
+
+    return undefined
   }
 
   /** 이미지 풀 (진행 상황 이벤트 발생) */
   async pullImage(image: string) {
     log.info('pullImage', { image })
+    validateImageRef(image)
     const adapter = await this.getAdapter()
 
     const windows = BrowserWindow.getAllWindows()
@@ -78,6 +138,7 @@ class ImageService {
   /** 이미지 삭제 */
   async deleteImage(id: string, force?: boolean) {
     log.info('deleteImage', { id, force })
+    validateImageRef(id)
     const adapter = await this.getAdapter()
     return adapter.deleteImage(id, force)
   }
@@ -85,6 +146,7 @@ class ImageService {
   /** 이미지 상세 조회 */
   async inspectImage(id: string) {
     log.debug('inspectImage', { id })
+    validateImageRef(id)
     const adapter = await this.getAdapter()
     return adapter.inspectImage(id)
   }

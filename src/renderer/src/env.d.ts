@@ -22,6 +22,11 @@ interface ImportMetaEnv {
   readonly PROD: boolean
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+interface ImportMeta {
+  readonly env: ImportMetaEnv
+}
+
 /**
  * IPC 이벤트 리스너 타입
  */

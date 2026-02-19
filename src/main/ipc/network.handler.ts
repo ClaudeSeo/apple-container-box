@@ -6,13 +6,15 @@ import { ipcMain } from 'electron'
 import { networkService } from '../services/network.service'
 import { validateName, ValidationError } from '../cli'
 import { logger } from '../utils/logger'
+import { assertTrustedIpcSender } from './security'
 
 const log = logger.scope('NetworkHandler')
 
 export function registerNetworkHandlers(): void {
   // 네트워크 목록 조회
-  ipcMain.handle('network:list', async () => {
+  ipcMain.handle('network:list', async (event) => {
     try {
+      assertTrustedIpcSender(event, 'network:list')
       return await networkService.listNetworks()
     } catch (error) {
       log.error('network:list failed', error)
@@ -23,8 +25,9 @@ export function registerNetworkHandlers(): void {
   // 네트워크 생성
   ipcMain.handle(
     'network:create',
-    async (_, { name, driver, subnet }: { name: string; driver?: string; subnet?: string }) => {
+    async (event, { name, driver, subnet }: { name: string; driver?: string; subnet?: string }) => {
       try {
+        assertTrustedIpcSender(event, 'network:create')
         validateName(name, 'network')
         return await networkService.createNetwork(name, driver, subnet)
       } catch (error) {
@@ -40,8 +43,9 @@ export function registerNetworkHandlers(): void {
   // 네트워크 삭제
   ipcMain.handle(
     'network:remove',
-    async (_, { id, force }: { id: string; force?: boolean }) => {
+    async (event, { id, force }: { id: string; force?: boolean }) => {
       try {
+        assertTrustedIpcSender(event, 'network:remove')
         return await networkService.deleteNetwork(id, force)
       } catch (error) {
         log.error('network:remove failed', error)
@@ -51,8 +55,9 @@ export function registerNetworkHandlers(): void {
   )
 
   // 네트워크 상세 조회
-  ipcMain.handle('network:inspect', async (_, { id }: { id: string }) => {
+  ipcMain.handle('network:inspect', async (event, { id }: { id: string }) => {
     try {
+      assertTrustedIpcSender(event, 'network:inspect')
       return await networkService.inspectNetwork(id)
     } catch (error) {
       log.error('network:inspect failed', error)
@@ -64,7 +69,7 @@ export function registerNetworkHandlers(): void {
   ipcMain.handle(
     'network:connect',
     async (
-      _,
+      event,
       {
         network,
         container,
@@ -73,6 +78,7 @@ export function registerNetworkHandlers(): void {
       }: { network: string; container: string; ip?: string; alias?: string[] }
     ) => {
       try {
+        assertTrustedIpcSender(event, 'network:connect')
         return await networkService.connectContainer(network, container, { ip, alias })
       } catch (error) {
         log.error('network:connect failed', error)
@@ -85,10 +91,11 @@ export function registerNetworkHandlers(): void {
   ipcMain.handle(
     'network:disconnect',
     async (
-      _,
+      event,
       { network, container, force }: { network: string; container: string; force?: boolean }
     ) => {
       try {
+        assertTrustedIpcSender(event, 'network:disconnect')
         return await networkService.disconnectContainer(network, container, force)
       } catch (error) {
         log.error('network:disconnect failed', error)

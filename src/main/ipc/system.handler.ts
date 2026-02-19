@@ -5,13 +5,15 @@
 import { ipcMain } from 'electron'
 import { systemService } from '../services/system.service'
 import { logger } from '../utils/logger'
+import { assertTrustedIpcSender } from './security'
 
 const log = logger.scope('SystemHandler')
 
 export function registerSystemHandlers(): void {
   // CLI 가용성 확인
-  ipcMain.handle('system:check-cli', async () => {
+  ipcMain.handle('system:check-cli', async (event) => {
     try {
+      assertTrustedIpcSender(event, 'system:check-cli')
       return await systemService.checkCLI()
     } catch (error) {
       log.error('system:check-cli failed', error)
@@ -20,8 +22,9 @@ export function registerSystemHandlers(): void {
   })
 
   // 시스템 정보 조회
-  ipcMain.handle('system:info', async () => {
+  ipcMain.handle('system:info', async (event) => {
     try {
+      assertTrustedIpcSender(event, 'system:info')
       return await systemService.getInfo()
     } catch (error) {
       log.error('system:info failed', error)
@@ -30,8 +33,9 @@ export function registerSystemHandlers(): void {
   })
 
   // CLI 버전 조회
-  ipcMain.handle('system:version', async () => {
+  ipcMain.handle('system:version', async (event) => {
     try {
+      assertTrustedIpcSender(event, 'system:version')
       return await systemService.getVersion()
     } catch (error) {
       log.error('system:version failed', error)
@@ -40,8 +44,9 @@ export function registerSystemHandlers(): void {
   })
 
   // 시스템 정리
-  ipcMain.handle('system:prune', async (_, options?: { volumes?: boolean }) => {
+  ipcMain.handle('system:prune', async (event, options?: { volumes?: boolean }) => {
     try {
+      assertTrustedIpcSender(event, 'system:prune')
       return await systemService.prune(options)
     } catch (error) {
       log.error('system:prune failed', error)
@@ -50,8 +55,9 @@ export function registerSystemHandlers(): void {
   })
 
   // 실시간 리소스 사용량 조회
-  ipcMain.handle('system:resources', async () => {
+  ipcMain.handle('system:resources', async (event) => {
     try {
+      assertTrustedIpcSender(event, 'system:resources')
       return await systemService.getResourceUsage()
     } catch (error) {
       log.error('system:resources failed', error)

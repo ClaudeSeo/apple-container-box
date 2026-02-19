@@ -18,10 +18,22 @@ import { registerAllHandlers, setupWindowStateEvents, cleanupStreams } from './i
 import { createTray, destroyTray, hasTray } from './tray'
 import { settingsStore } from './store/settings.store'
 import { setupApplicationMenu } from './menu/app-menu'
+import { isAllowedExternalUrl } from './ipc/security'
 
 /** 메인 윈도우 참조 */
 let mainWindow: BrowserWindow | null = null
 let isQuitting = false
+
+function openExternalIfAllowed(url: string, source: string): void {
+  if (!isAllowedExternalUrl(url)) {
+    logger.warn(`Blocked external URL (${source}): ${url}`)
+    return
+  }
+
+  void shell.openExternal(url).catch((error) => {
+    logger.error(`Failed to open external URL (${source})`, { url, error })
+  })
+}
 
 /** 앱 윈도우 생성 */
 function createWindow(): void {
@@ -70,7 +82,7 @@ function createWindow(): void {
 
   // 외부 링크는 기본 브라우저에서 열기
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+    openExternalIfAllowed(details.url, 'window-open-handler')
     return { action: 'deny' }
   })
 
@@ -216,7 +228,7 @@ app.on('web-contents-created', (_, contents) => {
 
   // 새 윈도우 생성 제한
   contents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url)
+    openExternalIfAllowed(url, 'web-contents-created')
     return { action: 'deny' }
   })
 })

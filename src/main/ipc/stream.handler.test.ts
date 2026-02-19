@@ -125,11 +125,11 @@ describe('stream.handler', () => {
     expect(startExecSessionMock).toHaveBeenCalled()
 
     const sessionId = (result as { sessionId: string }).sessionId
-    inputHandler?.({}, { sessionId, data: 'ls\n' })
-    closeHandler?.({}, { sessionId })
+    inputHandler?.(event, { sessionId, data: 'ls\n' })
+    closeHandler?.(event, { sessionId })
 
-    expect(sendExecInputMock).toHaveBeenCalledWith(sessionId, 'ls\n')
-    expect(stopExecSessionMock).toHaveBeenCalledWith(sessionId)
+    expect(sendExecInputMock).toHaveBeenCalledWith(sessionId, 'ls\n', 3)
+    expect(stopExecSessionMock).toHaveBeenCalledWith(sessionId, 3)
   })
 
   it('cleans up stream and polling services', () => {

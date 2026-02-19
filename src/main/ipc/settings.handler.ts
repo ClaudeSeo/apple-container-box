@@ -8,13 +8,15 @@ import { logger } from '../utils/logger'
 import { createTray, destroyTray, hasTray } from '../tray'
 import { resetCLIAdapter } from '../cli'
 import { resetAllServiceAdapters } from '../services'
+import { assertTrustedIpcSender } from './security'
 
 const log = logger.scope('SettingsHandler')
 
 export function registerSettingsHandlers(): void {
   // 설정 조회
-  ipcMain.handle('settings:get', async () => {
+  ipcMain.handle('settings:get', async (event) => {
     try {
+      assertTrustedIpcSender(event, 'settings:get')
       return settingsStore.get()
     } catch (error) {
       log.error('settings:get failed', error)
@@ -23,8 +25,9 @@ export function registerSettingsHandlers(): void {
   })
 
   // 설정 업데이트
-  ipcMain.handle('settings:set', async (_, settings: Partial<AppSettings>) => {
+  ipcMain.handle('settings:set', async (event, settings: Partial<AppSettings>) => {
     try {
+      assertTrustedIpcSender(event, 'settings:set')
       const previous = settingsStore.get()
       settingsStore.set(settings)
       const updated = settingsStore.get()
@@ -47,8 +50,9 @@ export function registerSettingsHandlers(): void {
   })
 
   // 설정 초기화
-  ipcMain.handle('settings:reset', async () => {
+  ipcMain.handle('settings:reset', async (event) => {
     try {
+      assertTrustedIpcSender(event, 'settings:reset')
       const reset = settingsStore.reset()
       applyRuntimeSettings(reset)
       resetCLIAdapter()

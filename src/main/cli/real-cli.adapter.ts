@@ -167,16 +167,8 @@ export class RealContainerCLI implements ContainerCLIAdapter {
     }
 
     if (options.start === false) {
-      try {
-        const output = await this.exec(buildArgs('create'), CLI_TIMEOUT_LONG)
-        return { id: output.trim() }
-      } catch (error) {
-        log.warn('create command failed, falling back to run + stop', error)
-        const output = await this.exec(buildArgs('run'), CLI_TIMEOUT_LONG)
-        const id = output.trim()
-        await this.stopContainer(id)
-        return { id }
-      }
+      const output = await this.exec(buildArgs('create'), CLI_TIMEOUT_LONG)
+      return { id: output.trim() }
     }
 
     const output = await this.exec(buildArgs('run'), CLI_TIMEOUT_LONG)
@@ -274,6 +266,7 @@ export class RealContainerCLI implements ContainerCLIAdapter {
   }
 
   async deleteImage(id: string, force?: boolean): Promise<void> {
+    validateImageRef(id)
     const args = ['image', 'rm']
     if (force) args.push('-f')
     args.push(id)
@@ -389,16 +382,43 @@ export class RealContainerCLI implements ContainerCLIAdapter {
   }
 
   async deleteNetwork(id: string, _force?: boolean): Promise<void> {
+    validateName(id, 'network')
     await this.exec(['network', 'rm', id])
   }
 
   async inspectNetwork(id: string): Promise<CLINetwork> {
+    validateName(id, 'network')
     const output = await this.exec(['network', 'inspect', id])
     const result = parseNetworkInspect(output)
     if (!result.success || !result.data) {
       throw new CLIError(CLIErrorCode.NOT_FOUND, `Network not found: ${id}`)
     }
     return result.data
+  }
+
+  async connectNetwork(
+    network: string,
+    container: string,
+    options?: { ip?: string; alias?: string[] }
+  ): Promise<void> {
+    validateName(network, 'network')
+    validateContainerId(container)
+    const args = ['network', 'connect']
+    if (options?.ip) args.push('--ip', options.ip)
+    if (options?.alias && options.alias.length > 0) {
+      args.push('--alias', options.alias.join(','))
+    }
+    args.push(network, container)
+    await this.exec(args)
+  }
+
+  async disconnectNetwork(network: string, container: string, force?: boolean): Promise<void> {
+    validateName(network, 'network')
+    validateContainerId(container)
+    const args = ['network', 'disconnect']
+    if (force) args.push('--force')
+    args.push(network, container)
+    await this.exec(args)
   }
 
   // 시스템

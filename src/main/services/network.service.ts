@@ -3,7 +3,7 @@
  * Network 관련 비즈니스 로직
  */
 
-import { createCLIAdapter, type ContainerCLIAdapter } from '../cli'
+import { createCLIAdapter, type ContainerCLIAdapter, validateContainerId, validateName } from '../cli'
 import { logger } from '../utils/logger'
 
 const log = logger.scope('NetworkService')
@@ -39,6 +39,7 @@ class NetworkService {
   /** 네트워크 삭제 */
   async deleteNetwork(id: string, force?: boolean) {
     log.info('deleteNetwork', { id, force })
+    validateName(id, 'network')
     const adapter = await this.getAdapter()
     return adapter.deleteNetwork(id, force)
   }
@@ -46,27 +47,31 @@ class NetworkService {
   /** 네트워크 상세 조회 */
   async inspectNetwork(id: string) {
     log.debug('inspectNetwork', { id })
+    validateName(id, 'network')
     const adapter = await this.getAdapter()
     return adapter.inspectNetwork(id)
   }
 
-  /** 네트워크에 컨테이너 연결 (CLI 레벨에서 직접 구현 필요) */
+  /** 네트워크에 컨테이너 연결 */
   async connectContainer(
     network: string,
     container: string,
     options?: { ip?: string; alias?: string[] }
   ) {
     log.info('connectContainer', { network, container, ...options })
-    // RealContainerCLI에 connect 메서드 추가 필요
-    // 현재는 placeholder
-    throw new Error('Not implemented yet')
+    validateName(network, 'network')
+    validateContainerId(container)
+    const adapter = await this.getAdapter()
+    return adapter.connectNetwork(network, container, options)
   }
 
   /** 네트워크에서 컨테이너 분리 */
   async disconnectContainer(network: string, container: string, force?: boolean) {
     log.info('disconnectContainer', { network, container, force })
-    // RealContainerCLI에 disconnect 메서드 추가 필요
-    throw new Error('Not implemented yet')
+    validateName(network, 'network')
+    validateContainerId(container)
+    const adapter = await this.getAdapter()
+    return adapter.disconnectNetwork(network, container, force)
   }
 }
 

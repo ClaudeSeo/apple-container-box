@@ -6,6 +6,7 @@
 import type { ChildProcess } from 'child_process'
 import type { WebContents } from 'electron'
 import { createCLIAdapter, type ContainerCLIAdapter } from '../cli'
+import { LOG_BUFFER_MAX_LINES } from '../utils/constants'
 import { logger } from '../utils/logger'
 
 const log = logger.scope('StreamService')
@@ -17,12 +18,14 @@ interface StreamSession {
   process: ChildProcess
   webContents: WebContents
   buffer: string[]
+  droppedChunks: number
   flushTimer: NodeJS.Timeout | null
 }
 
 interface ExecSession {
   process: ChildProcess
   webContents: WebContents
+  ownerWebContentsId: number
   containerId: string
 }
 
@@ -76,12 +79,18 @@ class StreamService {
       process: proc,
       webContents,
       buffer: [],
+      droppedChunks: 0,
       flushTimer: null
     }
 
     // stdout/stderr 공통 핸들러
     const handleOutput = (data: Buffer) => {
       session.buffer.push(data.toString())
+      if (session.buffer.length > LOG_BUFFER_MAX_LINES) {
+        const dropped = session.buffer.length - LOG_BUFFER_MAX_LINES
+        session.buffer.splice(0, dropped)
+        session.droppedChunks += dropped
+      }
       if (!session.flushTimer) {
         session.flushTimer = setTimeout(() => {
           this.flushBuffer(containerId, session)
@@ -129,6 +138,13 @@ class StreamService {
         line: session.buffer.join('')
       })
       session.buffer = []
+      if (session.droppedChunks > 0) {
+        log.warn('Log stream buffer was truncated', {
+          containerId,
+          droppedChunks: session.droppedChunks
+        })
+        session.droppedChunks = 0
+      }
     }
   }
 
@@ -178,6 +194,7 @@ class StreamService {
     const session: ExecSession = {
       process: proc,
       webContents,
+      ownerWebContentsId: webContents.id,
       containerId
     }
 
@@ -216,8 +233,12 @@ class StreamService {
   /**
    * Exec 세션에 입력 전송
    */
-  sendExecInput(sessionId: string, data: string): void {
+  sendExecInput(sessionId: string, data: string, senderWebContentsId: number): void {
     const session = this.execSessions.get(sessionId)
+    if (session && session.ownerWebContentsId !== senderWebContentsId) {
+      log.warn('Rejected exec input from non-owner renderer', { sessionId, senderWebContentsId })
+      return
+    }
     if (session && session.process.stdin) {
       session.process.stdin.write(data)
     }
@@ -226,8 +247,16 @@ class StreamService {
   /**
    * Exec 세션 중지
    */
-  stopExecSession(sessionId: string): void {
+  stopExecSession(sessionId: string, senderWebContentsId?: number): void {
     const session = this.execSessions.get(sessionId)
+    if (
+      session &&
+      senderWebContentsId !== undefined &&
+      session.ownerWebContentsId !== senderWebContentsId
+    ) {
+      log.warn('Rejected exec close from non-owner renderer', { sessionId, senderWebContentsId })
+      return
+    }
     if (session) {
       log.info('Stopping exec session', { sessionId })
       session.process.kill()
