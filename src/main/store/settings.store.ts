@@ -134,28 +134,36 @@ export const settingsStore = {
  * 깊은 병합 유틸리티
  */
 function deepMerge<T extends object>(target: T, source: Partial<T>): T {
-  const result = { ...target }
-  for (const key in source) {
-    const sourceValue = source[key]
-    const targetValue = result[key]
+  const result = { ...target } as Record<string, unknown>
+  const sourceObject = source as Record<string, unknown>
 
-    if (
-      sourceValue !== null &&
-      typeof sourceValue === 'object' &&
-      !Array.isArray(sourceValue) &&
-      targetValue !== null &&
-      typeof targetValue === 'object' &&
-      !Array.isArray(targetValue)
-    ) {
-      result[key] = deepMerge(targetValue as object, sourceValue as object) as T[Extract<
-        keyof T,
-        string
-      >]
-    } else if (sourceValue !== undefined) {
-      result[key] = sourceValue as T[Extract<keyof T, string>]
+  for (const [key, sourceValue] of Object.entries(sourceObject)) {
+    if (sourceValue === undefined) continue
+
+    const targetValue = result[key]
+    if (Array.isArray(sourceValue)) {
+      result[key] = [...sourceValue]
+      continue
     }
+
+    if (isPlainObject(sourceValue) && isPlainObject(targetValue)) {
+      result[key] = deepMerge(
+        targetValue as Record<string, unknown>,
+        sourceValue as Record<string, unknown>
+      )
+      continue
+    }
+
+    result[key] = sourceValue
   }
-  return result
+
+  return result as T
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (value === null || typeof value !== 'object') return false
+  const proto = Object.getPrototypeOf(value)
+  return proto === Object.prototype || proto === null
 }
 
 export default settingsStore
