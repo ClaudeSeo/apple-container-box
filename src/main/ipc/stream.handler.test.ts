@@ -9,6 +9,7 @@ const {
   startExecSessionMock,
   stopExecSessionMock,
   sendExecInputMock,
+  resizeExecSessionMock,
   streamCleanupMock,
   startStatsPollingMock,
   stopStatsPollingMock,
@@ -33,6 +34,7 @@ const {
     startExecSessionMock: vi.fn(),
     stopExecSessionMock: vi.fn(),
     sendExecInputMock: vi.fn(),
+    resizeExecSessionMock: vi.fn(),
     streamCleanupMock: vi.fn(),
     startStatsPollingMock: vi.fn(),
     stopStatsPollingMock: vi.fn(),
@@ -51,6 +53,7 @@ vi.mock('../services/stream.service', () => ({
     startExecSession: startExecSessionMock,
     stopExecSession: stopExecSessionMock,
     sendExecInput: sendExecInputMock,
+    resizeExecSession: resizeExecSessionMock,
     cleanup: streamCleanupMock
   }
 }))
@@ -119,10 +122,21 @@ describe('stream.handler', () => {
     const closeHandler = onHandlers.get('exec:close')
 
     const event = { sender: { id: 3 } }
-    const result = await startHandler?.(event, { containerId: 'c3', command: ['/bin/sh'] })
+    const result = await startHandler?.(event, {
+      containerId: 'c3',
+      command: ['/bin/sh'],
+      cols: 120,
+      rows: 40
+    })
 
     expect(result).toHaveProperty('sessionId')
-    expect(startExecSessionMock).toHaveBeenCalled()
+    expect(startExecSessionMock).toHaveBeenCalledWith(
+      expect.any(String),
+      'c3',
+      event.sender,
+      ['/bin/sh'],
+      { cols: 120, rows: 40 }
+    )
 
     const sessionId = (result as { sessionId: string }).sessionId
     inputHandler?.(event, { sessionId, data: 'ls\n' })
@@ -130,6 +144,18 @@ describe('stream.handler', () => {
 
     expect(sendExecInputMock).toHaveBeenCalledWith(sessionId, 'ls\n', 3)
     expect(stopExecSessionMock).toHaveBeenCalledWith(sessionId, 3)
+  })
+
+  it('routes exec:resize to resizeExecSession', () => {
+    registerStreamHandlers()
+
+    const resizeHandler = onHandlers.get('exec:resize')
+    expect(resizeHandler).toBeTypeOf('function')
+
+    const event = { sender: { id: 5 } }
+    resizeHandler?.(event, { sessionId: 'sess-1', cols: 120, rows: 40 })
+
+    expect(resizeExecSessionMock).toHaveBeenCalledWith('sess-1', 120, 40, 5)
   })
 
   it('cleans up stream and polling services', () => {

@@ -257,7 +257,7 @@ export class RealContainerCLI implements ContainerCLIAdapter {
   }
 
   spawnContainerExec(id: string, command: string[]): ChildProcess {
-    const args = ['exec', '-i', '-t', id, ...command]
+    const args = ['exec', '-i', id, ...command]
     return this.spawnProcess(args)
   }
 

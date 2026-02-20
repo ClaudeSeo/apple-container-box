@@ -31,6 +31,9 @@ extraResources:
   - from: resources/tray-icon.png
     to: resources/tray-icon.png
 
+asarUnpack:
+  - "node_modules/node-pty/**"
+
 files:
   - '!**/.vscode/*'
   - '!src/*'

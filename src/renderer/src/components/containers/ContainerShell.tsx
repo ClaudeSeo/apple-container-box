@@ -58,6 +58,13 @@ export function ContainerShell({ containerId }: ContainerShellProps): JSX.Elemen
       }
     })
 
+    // 터미널 리사이즈 핸들러
+    terminal.onResize(({ cols, rows }) => {
+      if (sessionIdRef.current) {
+        window.electronAPI.streams.resizeExec(sessionIdRef.current, cols, rows)
+      }
+    })
+
     terminalRef.current = terminal
     fitAddonRef.current = fitAddon
 
@@ -81,16 +88,39 @@ export function ContainerShell({ containerId }: ContainerShellProps): JSX.Elemen
     setIsConnecting(true)
 
     try {
-      const { sessionId } = await window.electronAPI.streams.startExec(containerId, ['/bin/sh'])
+      fitAddonRef.current?.fit()
+      const cols = terminalRef.current?.cols || 80
+      const rows = terminalRef.current?.rows || 24
+      const { sessionId } = await window.electronAPI.streams.startExec(
+        containerId,
+        ['/bin/sh'],
+        cols,
+        rows
+      )
 
       sessionIdRef.current = sessionId
 
       // 출력 스트림 구독
-      unsubscribeRef.current = window.electronAPI.streams.onExec(sessionId, (data) => {
-        if (terminalRef.current) {
-          terminalRef.current.write(data.output)
+      unsubscribeRef.current = window.electronAPI.streams.onExec(
+        sessionId,
+        (data) => {
+          if (terminalRef.current) {
+            terminalRef.current.write(data.output)
+          }
+        },
+        (error) => {
+          terminalRef.current?.writeln(
+            `\r\n\x1b[31mShell error: ${error.message}\x1b[0m`
+          )
+          setIsConnected(false)
+        },
+        (close) => {
+          terminalRef.current?.writeln(
+            `\r\n\x1b[33mSession ended (exit code: ${close.code ?? 'unknown'})\x1b[0m`
+          )
+          setIsConnected(false)
         }
-      })
+      )
 
       setIsConnected(true)
       terminalRef.current?.focus()

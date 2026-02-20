@@ -83,12 +83,18 @@ interface StreamsAPI {
       timestamp: number
     }) => void
   ): Unsubscribe
-  onExec(sessionId: string, callback: (data: { output: string }) => void): Unsubscribe
+  onExec(
+    sessionId: string,
+    callback: (data: { output: string }) => void,
+    onError?: (data: { message: string }) => void,
+    onClose?: (data: { code: number | null }) => void
+  ): Unsubscribe
   sendExecInput(sessionId: string, data: string): void
+  resizeExec(sessionId: string, cols: number, rows: number): void
   onPullProgress(
     callback: (data: { image: string; status: string; current?: number; total?: number }) => void
   ): Unsubscribe
-  startExec(containerId: string, command: string[]): Promise<{ sessionId: string }>
+  startExec(containerId: string, command: string[], cols?: number, rows?: number): Promise<{ sessionId: string }>
 }
 
 /** System API */

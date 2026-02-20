@@ -3,12 +3,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LOG_BUFFER_MAX_LINES } from '../utils/constants'
 import { POLLING_INTERVAL_STATS } from '../utils/constants'
 
-const { createCLIAdapterMock } = vi.hoisted(() => ({
-  createCLIAdapterMock: vi.fn()
+const { createCLIAdapterMock, isMockModeMock } = vi.hoisted(() => ({
+  createCLIAdapterMock: vi.fn(),
+  isMockModeMock: vi.fn(() => false)
 }))
 
 vi.mock('../cli', () => ({
-  createCLIAdapter: createCLIAdapterMock
+  createCLIAdapter: createCLIAdapterMock,
+  isMockMode: isMockModeMock
+}))
+
+vi.mock('node-pty', () => ({
+  spawn: vi.fn()
 }))
 
 vi.mock('../utils/logger', () => ({
@@ -22,6 +28,7 @@ vi.mock('../utils/logger', () => ({
   }
 }))
 
+import * as pty from 'node-pty'
 import { streamService } from './stream.service'
 import { pollingService } from './polling.service'
 
@@ -59,54 +66,102 @@ describe('streamService', () => {
     })
   })
 
-  it('propagates exec session spawn failures to renderer error channel', async () => {
+  it('propagates exec session spawn failures when pty.spawn throws', async () => {
     const webContents = createWebContentsMock()
+    isMockModeMock.mockReturnValue(false)
     createCLIAdapterMock.mockResolvedValue({
-      spawnContainerExec: vi.fn(() => {
-        throw new Error('spawn exec failed')
-      })
+      getCLIPath: vi.fn().mockResolvedValue('/usr/local/bin/container')
+    })
+    vi.mocked(pty.spawn).mockImplementation(() => {
+      throw new Error('pty spawn failed')
     })
 
     await expect(
       streamService.startExecSession('session-1', 'c1', webContents as never)
-    ).rejects.toThrow('spawn exec failed')
+    ).rejects.toThrow('pty spawn failed')
 
     expect(webContents.send).toHaveBeenCalledWith('exec:error:session-1', {
-      message: 'spawn exec failed'
+      message: 'pty spawn failed'
     })
   })
 
-  it('accepts exec input/close only from the owner renderer', async () => {
-    const stdinWrite = vi.fn()
-    const proc = new EventEmitter() as EventEmitter & {
-      stdout: EventEmitter
-      stderr: EventEmitter
-      stdin: { write: (data: string) => void }
-      kill: () => void
-    }
-    proc.stdout = new EventEmitter()
-    proc.stderr = new EventEmitter()
-    proc.stdin = { write: stdinWrite }
-    proc.kill = vi.fn()
+  it('accepts exec input/close only from the owner renderer (mock mode)', async () => {
+    const writeStub = vi.fn()
+    const killStub = vi.fn()
 
+    const mockPtyProcess = {
+      onData: vi.fn(),
+      onExit: vi.fn(),
+      write: writeStub,
+      resize: vi.fn(),
+      kill: killStub,
+      pid: 999,
+      cols: 80,
+      rows: 24,
+      process: '',
+      handleFlowControl: false,
+      pause: vi.fn(),
+      resume: vi.fn(),
+      clear: vi.fn()
+    }
+
+    isMockModeMock.mockReturnValue(false)
     createCLIAdapterMock.mockResolvedValue({
-      spawnContainerExec: vi.fn(() => proc)
+      getCLIPath: vi.fn().mockResolvedValue('/usr/local/bin/container')
     })
+    vi.mocked(pty.spawn).mockReturnValue(mockPtyProcess as unknown as pty.IPty)
 
     const ownerWebContents = createWebContentsMock(11)
     await streamService.startExecSession('session-owner', 'c1', ownerWebContents as never)
 
     streamService.sendExecInput('session-owner', 'pwd\n', 99)
-    expect(stdinWrite).not.toHaveBeenCalled()
+    expect(writeStub).not.toHaveBeenCalled()
 
     streamService.sendExecInput('session-owner', 'pwd\n', 11)
-    expect(stdinWrite).toHaveBeenCalledWith('pwd\n')
+    expect(writeStub).toHaveBeenCalledWith('pwd\n')
 
     streamService.stopExecSession('session-owner', 99)
-    expect(proc.kill).not.toHaveBeenCalled()
+    expect(killStub).not.toHaveBeenCalled()
 
     streamService.stopExecSession('session-owner', 11)
-    expect(proc.kill).toHaveBeenCalledTimes(1)
+    expect(killStub).toHaveBeenCalledTimes(1)
+  })
+
+  it('resizes the pty session and rejects from non-owner', async () => {
+    const resizeStub = vi.fn()
+
+    const mockPtyProcess = {
+      onData: vi.fn(),
+      onExit: vi.fn(),
+      write: vi.fn(),
+      resize: resizeStub,
+      kill: vi.fn(),
+      pid: 999,
+      cols: 80,
+      rows: 24,
+      process: '',
+      handleFlowControl: false,
+      pause: vi.fn(),
+      resume: vi.fn(),
+      clear: vi.fn()
+    }
+
+    isMockModeMock.mockReturnValue(false)
+    createCLIAdapterMock.mockResolvedValue({
+      getCLIPath: vi.fn().mockResolvedValue('/usr/local/bin/container')
+    })
+    vi.mocked(pty.spawn).mockReturnValue(mockPtyProcess as unknown as pty.IPty)
+
+    const ownerWebContents = createWebContentsMock(22)
+    await streamService.startExecSession('session-resize', 'c1', ownerWebContents as never)
+
+    // non-owner → reject
+    streamService.resizeExecSession('session-resize', 120, 40, 99)
+    expect(resizeStub).not.toHaveBeenCalled()
+
+    // owner → accept
+    streamService.resizeExecSession('session-resize', 120, 40, 22)
+    expect(resizeStub).toHaveBeenCalledWith(120, 40)
   })
 
   it('starts a log stream and emits buffered output', async () => {

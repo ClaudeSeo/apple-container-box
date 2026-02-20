@@ -5,7 +5,8 @@
 
 import type { ChildProcess } from 'child_process'
 import type { WebContents } from 'electron'
-import { createCLIAdapter, type ContainerCLIAdapter } from '../cli'
+import * as pty from 'node-pty'
+import { createCLIAdapter, isMockMode, type ContainerCLIAdapter } from '../cli'
 import { LOG_BUFFER_MAX_LINES } from '../utils/constants'
 import { logger } from '../utils/logger'
 
@@ -23,7 +24,7 @@ interface StreamSession {
 }
 
 interface ExecSession {
-  process: ChildProcess
+  pty: pty.IPty
   webContents: WebContents
   ownerWebContentsId: number
   containerId: string
@@ -164,13 +165,14 @@ class StreamService {
   }
 
   /**
-   * Exec 세션 시작
+   * Exec 세션 시작 (PTY 기반)
    */
   async startExecSession(
     sessionId: string,
     containerId: string,
     webContents: WebContents,
-    command: string[] = ['/bin/sh']
+    command: string[] = ['/bin/sh'],
+    options?: { cols?: number; rows?: number }
   ): Promise<void> {
     // 기존 세션이 있으면 중지
     if (this.execSessions.has(sessionId)) {
@@ -178,10 +180,57 @@ class StreamService {
     }
 
     log.info('Starting exec session', { sessionId, containerId, command })
-    let proc: ChildProcess
+
     try {
       const adapter = await this.getAdapter()
-      proc = adapter.spawnContainerExec(containerId, command)
+
+      // Mock 모드: 기존 pipe 기반 fallback
+      if (isMockMode()) {
+        return this.startMockExecSession(sessionId, containerId, webContents, command, adapter)
+      }
+
+      const cliPath = await adapter.getCLIPath()
+      if (!cliPath) {
+        throw new Error('CLI path not available')
+      }
+
+      // PTY 환경 변수: undefined 값 제거 (node-pty 네이티브 코드가 null env 처리 불가)
+      const safeEnv = Object.fromEntries(
+        Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined)
+      )
+
+      // Apple Container 런타임은 컨테이너 내 TTY 할당(-t)을 미지원(EOPNOTSUPP).
+      // node-pty가 호스트 PTY를 제공하므로 -i만으로도 echo/line editing 동작.
+      const ptyProcess = pty.spawn(cliPath, ['exec', '-i', containerId, ...command], {
+        name: 'xterm-256color',
+        cols: options?.cols || 80,
+        rows: options?.rows || 24,
+        cwd: process.env.HOME || '/',
+        env: safeEnv
+      })
+
+      const session: ExecSession = {
+        pty: ptyProcess,
+        webContents,
+        ownerWebContentsId: webContents.id,
+        containerId
+      }
+
+      ptyProcess.onData((data: string) => {
+        if (!webContents.isDestroyed()) {
+          webContents.send(`exec:output:${sessionId}`, { output: data })
+        }
+      })
+
+      ptyProcess.onExit(({ exitCode }) => {
+        log.debug('Exec session closed', { sessionId, exitCode })
+        if (!webContents.isDestroyed()) {
+          webContents.send(`exec:close:${sessionId}`, { code: exitCode })
+        }
+        this.execSessions.delete(sessionId)
+      })
+
+      this.execSessions.set(sessionId, session)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to start exec session'
       log.error('Failed to start exec session', { sessionId, containerId, error })
@@ -190,44 +239,78 @@ class StreamService {
       }
       throw new Error(message)
     }
+  }
 
+  /**
+   * Mock 모드 exec 세션 (pipe 기반)
+   */
+  private async startMockExecSession(
+    sessionId: string,
+    containerId: string,
+    webContents: WebContents,
+    command: string[],
+    adapter: ContainerCLIAdapter
+  ): Promise<void> {
+    const proc = adapter.spawnContainerExec(containerId, command)
+
+    const mockPty = this.wrapChildProcessAsPty(proc)
     const session: ExecSession = {
-      process: proc,
+      pty: mockPty,
       webContents,
       ownerWebContentsId: webContents.id,
       containerId
     }
 
-    // stdout/stderr 공통 핸들러
-    const handleExecOutput = (data: Buffer) => {
+    proc.stdout?.on('data', (data: Buffer) => {
       if (!webContents.isDestroyed()) {
         webContents.send(`exec:output:${sessionId}`, { output: data.toString() })
       }
-    }
-
-    proc.stdout?.on('data', handleExecOutput)
-    proc.stderr?.on('data', handleExecOutput)
-
-    // 프로세스 종료 처리
-    proc.on('close', (code) => {
-      log.debug('Exec session closed', { sessionId, code })
+    })
+    proc.stderr?.on('data', (data: Buffer) => {
+      if (!webContents.isDestroyed()) {
+        webContents.send(`exec:output:${sessionId}`, { output: data.toString() })
+      }
+    })
+    proc.on('close', (code: number | null) => {
+      log.debug('Mock exec session closed', { sessionId, code })
       if (!webContents.isDestroyed()) {
         webContents.send(`exec:close:${sessionId}`, { code })
       }
       this.execSessions.delete(sessionId)
     })
 
-    proc.on('error', (error) => {
-      log.error('Exec session error', { sessionId, error })
-      if (!webContents.isDestroyed()) {
-        webContents.send(`exec:error:${sessionId}`, {
-          message: error.message
-        })
-      }
-      this.execSessions.delete(sessionId)
-    })
-
     this.execSessions.set(sessionId, session)
+  }
+
+  /**
+   * ChildProcess → IPty 최소 호환 래퍼 (mock 전용)
+   */
+  private wrapChildProcessAsPty(proc: ChildProcess): pty.IPty {
+    return {
+      pid: proc.pid ?? 0,
+      cols: 80,
+      rows: 24,
+      process: '',
+      handleFlowControl: false,
+      onData: (cb: (data: string) => void) => {
+        proc.stdout?.on('data', (d: Buffer) => cb(d.toString()))
+        return { dispose: () => proc.stdout?.removeAllListeners('data') }
+      },
+      onExit: (cb: (e: { exitCode: number; signal?: number }) => void) => {
+        proc.on('close', (code) => cb({ exitCode: code ?? 0, signal: 0 }))
+        return { dispose: () => proc.removeAllListeners('close') }
+      },
+      write: (data: string) => {
+        proc.stdin?.write(data)
+      },
+      resize: () => {},
+      kill: () => {
+        proc.kill()
+      },
+      pause: () => {},
+      resume: () => {},
+      clear: () => {}
+    } as unknown as pty.IPty
   }
 
   /**
@@ -239,8 +322,22 @@ class StreamService {
       log.warn('Rejected exec input from non-owner renderer', { sessionId, senderWebContentsId })
       return
     }
-    if (session && session.process.stdin) {
-      session.process.stdin.write(data)
+    if (session) {
+      session.pty.write(data)
+    }
+  }
+
+  /**
+   * Exec 세션 리사이즈
+   */
+  resizeExecSession(sessionId: string, cols: number, rows: number, senderWebContentsId: number): void {
+    const session = this.execSessions.get(sessionId)
+    if (session && session.ownerWebContentsId !== senderWebContentsId) {
+      log.warn('Rejected exec resize from non-owner renderer', { sessionId, senderWebContentsId })
+      return
+    }
+    if (session) {
+      session.pty.resize(cols, rows)
     }
   }
 
@@ -259,7 +356,7 @@ class StreamService {
     }
     if (session) {
       log.info('Stopping exec session', { sessionId })
-      session.process.kill()
+      session.pty.kill()
       this.execSessions.delete(sessionId)
     }
   }

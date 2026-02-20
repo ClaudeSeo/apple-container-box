@@ -138,12 +138,31 @@ const streamsAPI = {
   },
 
   /** Shell exec 세션 구독 */
-  onExec: (sessionId: string, callback: IPCListener<{ output: string }>): Unsubscribe => {
-    const channel = `exec:output:${sessionId}`
-    const handler = (_event: Electron.IpcRendererEvent, data: { output: string }) => callback(data)
-    ipcRenderer.on(channel, handler)
+  onExec: (
+    sessionId: string,
+    callback: IPCListener<{ output: string }>,
+    onError?: (data: { message: string }) => void,
+    onClose?: (data: { code: number | null }) => void
+  ): Unsubscribe => {
+    const outputChannel = `exec:output:${sessionId}`
+    const errorChannel = `exec:error:${sessionId}`
+    const closeChannel = `exec:close:${sessionId}`
+
+    const outputHandler = (_event: Electron.IpcRendererEvent, data: { output: string }) =>
+      callback(data)
+    const errorHandler = (_event: Electron.IpcRendererEvent, data: { message: string }) =>
+      onError?.(data)
+    const closeHandler = (_event: Electron.IpcRendererEvent, data: { code: number | null }) =>
+      onClose?.(data)
+
+    ipcRenderer.on(outputChannel, outputHandler)
+    if (onError) ipcRenderer.on(errorChannel, errorHandler)
+    if (onClose) ipcRenderer.on(closeChannel, closeHandler)
+
     return () => {
-      ipcRenderer.removeListener(channel, handler)
+      ipcRenderer.removeListener(outputChannel, outputHandler)
+      if (onError) ipcRenderer.removeListener(errorChannel, errorHandler)
+      if (onClose) ipcRenderer.removeListener(closeChannel, closeHandler)
       ipcRenderer.send('exec:close', { sessionId })
     }
   },
@@ -173,8 +192,13 @@ const streamsAPI = {
   },
 
   /** Shell exec 세션 시작 */
-  startExec: (containerId: string, command: string[]) =>
-    ipcRenderer.invoke('exec:start', { containerId, command })
+  startExec: (containerId: string, command: string[], cols?: number, rows?: number) =>
+    ipcRenderer.invoke('exec:start', { containerId, command, cols, rows }),
+
+  /** Exec 터미널 리사이즈 */
+  resizeExec: (sessionId: string, cols: number, rows: number) => {
+    ipcRenderer.send('exec:resize', { sessionId, cols, rows })
+  }
 }
 
 /**

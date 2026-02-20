@@ -102,8 +102,14 @@ declare global {
             timestamp: number
           }>
         ) => Unsubscribe
-        onExec: (sessionId: string, callback: IPCListener<{ output: string }>) => Unsubscribe
+        onExec: (
+          sessionId: string,
+          callback: IPCListener<{ output: string }>,
+          onError?: (data: { message: string }) => void,
+          onClose?: (data: { code: number | null }) => void
+        ) => Unsubscribe
         sendExecInput: (sessionId: string, data: string) => void
+        resizeExec: (sessionId: string, cols: number, rows: number) => void
         onPullProgress: (
           callback: IPCListener<{
             image: string
@@ -112,7 +118,7 @@ declare global {
             total?: number
           }>
         ) => Unsubscribe
-        startExec: (containerId: string, command: string[]) => Promise<{ sessionId: string }>
+        startExec: (containerId: string, command: string[], cols?: number, rows?: number) => Promise<{ sessionId: string }>
       }
 
       system: {

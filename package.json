@@ -5,7 +5,7 @@
   "description": "macOS desktop app for Apple Container management",
   "main": "./out/main/index.js",
   "scripts": {
-    "postinstall": "bash scripts/rename-electron.sh",
+    "postinstall": "node -e \"const fs=require('fs'),p=require('path').join('node_modules','node-pty','prebuilds');if(fs.existsSync(p))fs.readdirSync(p,{recursive:true}).filter(f=>f.endsWith('spawn-helper')).forEach(f=>fs.chmodSync(require('path').join(p,f),0o755))\" && bash scripts/rename-electron.sh",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
@@ -37,6 +37,7 @@
     "cmdk": "^1.1.1",
     "electron-log": "^5.4.3",
     "electron-store": "^11.0.2",
+    "node-pty": "^1.1.0",
     "react-resizable-panels": "^4.6.4"
   },
   "devDependencies": {

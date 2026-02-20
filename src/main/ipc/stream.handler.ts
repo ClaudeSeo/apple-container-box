@@ -60,13 +60,21 @@ export function registerStreamHandlers(): void {
     'exec:start',
     async (
       event,
-      { containerId, command }: { containerId: string; command?: string[] }
+      {
+        containerId,
+        command,
+        cols,
+        rows
+      }: { containerId: string; command?: string[]; cols?: number; rows?: number }
     ): Promise<{ sessionId: string }> => {
       assertTrustedIpcSender(event, 'exec:start')
       const sessionId = `exec-${randomUUID()}`
       log.info('exec:start', { sessionId, containerId, command })
 
-      await streamService.startExecSession(sessionId, containerId, event.sender, command)
+      await streamService.startExecSession(sessionId, containerId, event.sender, command, {
+        cols,
+        rows
+      })
       return { sessionId }
     }
   )
@@ -83,6 +91,18 @@ export function registerStreamHandlers(): void {
     log.debug('exec:close', { sessionId })
     streamService.stopExecSession(sessionId, event.sender.id)
   })
+
+  // Exec 터미널 리사이즈
+  ipcMain.on(
+    'exec:resize',
+    (
+      event: IpcMainEvent,
+      { sessionId, cols, rows }: { sessionId: string; cols: number; rows: number }
+    ) => {
+      if (!isTrustedStreamEvent(event, 'exec:resize')) return
+      streamService.resizeExecSession(sessionId, cols, rows, event.sender.id)
+    }
+  )
 
   log.info('Stream handlers registered')
 }
