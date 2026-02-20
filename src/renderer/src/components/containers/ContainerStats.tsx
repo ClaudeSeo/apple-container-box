@@ -22,7 +22,8 @@ interface ContainerStatsProps {
  * - CPU, 메모리 사용량
  */
 export function ContainerStats({ containerId }: ContainerStatsProps): JSX.Element {
-  const { currentStats, history } = useContainerStats(containerId)
+  const { currentStats, history, isPolling } = useContainerStats(containerId)
+  const isWarmingUp = isPolling && history.length < 2
 
   // 차트 데이터 포맷팅
   const chartData = useMemo(() => {
@@ -44,14 +45,34 @@ export function ContainerStats({ containerId }: ContainerStatsProps): JSX.Elemen
       <div className="grid grid-cols-2 gap-3">
         <StatCard
           title="CPU"
-          value={currentStats ? formatPercent(currentStats.cpuPercent / 100, 1) : '-'}
+          value={
+            isWarmingUp
+              ? 'Collecting stats...'
+              : currentStats
+                ? formatPercent(currentStats.cpuPercent / 100, 1)
+                : '-'
+          }
           color="#007AFF"
         />
         <StatCard
           title="Memory"
-          value={currentStats ? formatBytes(currentStats.memoryUsage) : '-'}
+          value={isWarmingUp ? 'Collecting stats...' : currentStats ? formatBytes(currentStats.memoryUsage) : '-'}
           subValue={currentStats ? formatPercent(memoryPercent / 100, 1) : undefined}
           color="#34C759"
+        />
+        <StatCard
+          title="Network RX"
+          value={
+            isWarmingUp ? 'Collecting stats...' : currentStats ? formatBytes(currentStats.networkRx) : '-'
+          }
+          color="#FF9500"
+        />
+        <StatCard
+          title="Network TX"
+          value={
+            isWarmingUp ? 'Collecting stats...' : currentStats ? formatBytes(currentStats.networkTx) : '-'
+          }
+          color="#FF3B30"
         />
       </div>
 
@@ -135,13 +156,6 @@ export function ContainerStats({ containerId }: ContainerStatsProps): JSX.Elemen
         </CardContent>
       </Card>
 
-      {/* 네트워크 I/O */}
-      {currentStats && (
-        <div className="grid grid-cols-2 gap-3">
-          <StatCard title="Network RX" value={formatBytes(currentStats.networkRx)} color="#FF9500" />
-          <StatCard title="Network TX" value={formatBytes(currentStats.networkTx)} color="#FF3B30" />
-        </div>
-      )}
     </div>
   )
 }

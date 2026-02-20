@@ -282,17 +282,24 @@ export function parseNetworkInspect(output: string): CLIParseResult<CLINetwork> 
  */
 export function parseContainerStats(output: string, containerId: string): CLIParseResult<CLIContainerStats> {
   try {
-    // 예상 형식: {"cpu": 5.2, "memory": {"usage": 123456, "limit": 1000000}, ...}
-    const raw = JSON.parse(output.trim())
+    // 예상 형식:
+    // - Legacy: {"cpu": 5.2, "memory": {"usage": 123456, "limit": 1000000}, ...}
+    // - Apple:  [{"cpuUsageUsec": 40855, "memoryUsageBytes": 22097920, ...}]
+    const parsed = JSON.parse(output.trim())
+    const raw = Array.isArray(parsed) ? parsed[0] : parsed
+    const toNumber = (value: unknown): number | undefined => {
+      if (typeof value === 'number' && Number.isFinite(value)) return value
+      return undefined
+    }
     const stats: CLIContainerStats = {
       containerId,
-      cpuPercent: raw.cpu ?? raw.CPUPerc ?? 0,
-      memoryUsage: raw.memory?.usage ?? raw.MemUsage ?? 0,
-      memoryLimit: raw.memory?.limit ?? raw.MemLimit ?? 0,
-      networkRx: raw.network?.rx ?? raw.NetIO?.rx ?? 0,
-      networkTx: raw.network?.tx ?? raw.NetIO?.tx ?? 0,
-      blockRead: raw.block?.read ?? raw.BlockIO?.read ?? 0,
-      blockWrite: raw.block?.write ?? raw.BlockIO?.write ?? 0,
+      cpuPercent: toNumber(raw?.cpu) ?? toNumber(raw?.CPUPerc) ?? 0,
+      memoryUsage: toNumber(raw?.memory?.usage) ?? toNumber(raw?.MemUsage) ?? toNumber(raw?.memoryUsageBytes) ?? 0,
+      memoryLimit: toNumber(raw?.memory?.limit) ?? toNumber(raw?.MemLimit) ?? toNumber(raw?.memoryLimitBytes) ?? 0,
+      networkRx: toNumber(raw?.network?.rx) ?? toNumber(raw?.NetIO?.rx) ?? toNumber(raw?.networkRxBytes) ?? 0,
+      networkTx: toNumber(raw?.network?.tx) ?? toNumber(raw?.NetIO?.tx) ?? toNumber(raw?.networkTxBytes) ?? 0,
+      blockRead: toNumber(raw?.block?.read) ?? toNumber(raw?.BlockIO?.read) ?? toNumber(raw?.blockReadBytes) ?? 0,
+      blockWrite: toNumber(raw?.block?.write) ?? toNumber(raw?.BlockIO?.write) ?? toNumber(raw?.blockWriteBytes) ?? 0,
       timestamp: Date.now()
     }
     return { success: true, data: stats }

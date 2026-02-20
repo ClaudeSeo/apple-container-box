@@ -45,6 +45,7 @@ const log = logger.scope('CLI')
  */
 export class RealContainerCLI implements ContainerCLIAdapter {
   private cliPath: string | null = null
+  private cpuUsageSnapshots = new Map<string, { cpuUsageUsec: number; timestamp: number }>()
 
   constructor(cliPath?: string) {
     if (cliPath) this.cliPath = cliPath
@@ -219,7 +220,33 @@ export class RealContainerCLI implements ContainerCLIAdapter {
     if (!result.success) {
       throw new CLIError(CLIErrorCode.PARSE_ERROR, result.error!.message)
     }
-    return result.data!
+    const stats = result.data!
+
+    try {
+      const parsed = JSON.parse(output.trim())
+      const raw = Array.isArray(parsed) ? parsed[0] : parsed
+      const cpuUsageUsec =
+        typeof raw?.cpuUsageUsec === 'number' && Number.isFinite(raw.cpuUsageUsec)
+          ? raw.cpuUsageUsec
+          : undefined
+
+      if (cpuUsageUsec != null) {
+        const previous = this.cpuUsageSnapshots.get(id)
+        if ((!stats.cpuPercent || stats.cpuPercent <= 0) && previous) {
+          const deltaCpuUsec = cpuUsageUsec - previous.cpuUsageUsec
+          const elapsedUsec = (stats.timestamp - previous.timestamp) * 1000
+          if (deltaCpuUsec >= 0 && elapsedUsec > 0) {
+            const computedPercent = (deltaCpuUsec / elapsedUsec) * 100
+            stats.cpuPercent = Math.max(0, Math.min(100, computedPercent))
+          }
+        }
+        this.cpuUsageSnapshots.set(id, { cpuUsageUsec, timestamp: stats.timestamp })
+      }
+    } catch {
+      // stats 본문 파싱 실패 시 기본 파싱 결과를 그대로 사용
+    }
+
+    return stats
   }
 
   spawnContainerLogs(id: string, options?: { tail?: number; follow?: boolean }): ChildProcess {

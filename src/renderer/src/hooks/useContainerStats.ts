@@ -110,6 +110,7 @@ export function useContainerStats(
         unsubscribeRef.current()
         unsubscribeRef.current = null
       }
+      isPollingRef.current = false
       setIsPolling(false)
     }
   }, [containerId, enabled, startPolling])

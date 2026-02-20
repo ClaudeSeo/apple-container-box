@@ -58,4 +58,44 @@ describe('RealContainerCLI', () => {
       'a1b2c3d4e5f6'
     ])
   })
+
+  it('computes cpuPercent from cpuUsageUsec delta when stats output has no cpu field', async () => {
+    const cli = new RealContainerCLI('/tmp/fake-container')
+    const execMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        JSON.stringify([
+          {
+            id: 'nginx-container',
+            cpuUsageUsec: 100000,
+            memoryUsageBytes: 22097920,
+            memoryLimitBytes: 1073741824,
+            networkRxBytes: 1000,
+            networkTxBytes: 100
+          }
+        ])
+      )
+      .mockResolvedValueOnce(
+        JSON.stringify([
+          {
+            id: 'nginx-container',
+            cpuUsageUsec: 150000,
+            memoryUsageBytes: 22097920,
+            memoryLimitBytes: 1073741824,
+            networkRxBytes: 1100,
+            networkTxBytes: 200
+          }
+        ])
+      )
+    Reflect.set(cli as object, 'exec', execMock)
+
+    const nowSpy = vi.spyOn(Date, 'now')
+    nowSpy.mockReturnValueOnce(1000).mockReturnValueOnce(2000)
+
+    const first = await cli.getContainerStats('nginx-container')
+    const second = await cli.getContainerStats('nginx-container')
+
+    expect(first.cpuPercent).toBe(0)
+    expect(second.cpuPercent).toBeCloseTo(5, 5)
+  })
 })
