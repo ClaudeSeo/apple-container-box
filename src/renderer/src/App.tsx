@@ -1,17 +1,18 @@
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useState, useCallback } from 'react'
 import { Toaster } from '@/components/ui/toaster'
+import { useCLIStatus } from '@/hooks/useSettings'
 
-/**
- * 루트 앱 컴포넌트
- * - 레이아웃 구성 (Task 9에서 구현)
- * - 전역 상태 관리 (Zustand)
- * - Command Palette, Toast 등 전역 UI
- */
-
-// Lazy load pages (Task 10, 11, 12에서 구현 예정)
 const AppLayout = lazy(() => import('@/components/layout/AppLayout'))
+const OnboardingScreen = lazy(() => import('@/components/onboarding/OnboardingScreen'))
 
 function App(): JSX.Element {
+  const { status, loading, refetch } = useCLIStatus()
+  const [demoMode, setDemoMode] = useState(false)
+  const handleDemoMode = useCallback(() => setDemoMode(true), [])
+
+  // 재확인 중에도 OnboardingScreen을 유지하기 위해 loading 조건 제거
+  const showOnboarding = status !== null && !status.available && !demoMode
+
   return (
     <div className="h-screen w-screen overflow-hidden bg-background">
       <Suspense
@@ -24,7 +25,16 @@ function App(): JSX.Element {
           </div>
         }
       >
-        <AppLayout />
+        {status === null && loading ? (
+          // 초기 로딩 (아직 status 없음): 스피너
+          <div className="flex h-full w-full items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+          </div>
+        ) : showOnboarding ? (
+          <OnboardingScreen onDemoMode={handleDemoMode} onRecheck={refetch} checking={loading} />
+        ) : (
+          <AppLayout />
+        )}
       </Suspense>
       <Toaster />
     </div>

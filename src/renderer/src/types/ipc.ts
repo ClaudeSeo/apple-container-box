@@ -60,6 +60,16 @@ export interface IPCInvokeChannels {
   'system:version': { args: void; result: CLIVersion }
   'system:prune': { args: { volumes?: boolean }; result: PruneResult }
   'system:resources': { args: void; result: SystemResources }
+  'system:check-cli': {
+    args: void
+    result: {
+      available: boolean
+      path?: string
+      version?: string
+      error?: string
+      isMock?: boolean
+    }
+  }
 
   // Settings
   'settings:get': { args: void; result: AppSettings }

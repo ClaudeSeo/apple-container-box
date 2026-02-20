@@ -36,21 +36,28 @@ class SystemService {
     isMock?: boolean
   }> {
     log.debug('checkCLI')
-    try {
-      const adapter = await this.getAdapter()
-      const available = await adapter.checkCLIAvailable()
 
-      if (available) {
+    // 개발용: 온보딩 화면 강제 표시 (CONTAINER_BOX_ONBOARDING=true)
+    if (process.env.CONTAINER_BOX_ONBOARDING === 'true') {
+      return { available: false, error: 'Forced onboarding mode', isMock: true }
+    }
+
+    try {
+      // adapter 싱글턴 생성 트리거 — 내부에서 CLI 탐지 및 Mock 폴백 결정
+      const adapter = await this.getAdapter()
+
+      if (!isMockMode()) {
+        // Real CLI 사용 중
         const path = await adapter.getCLIPath()
         const version = await adapter.getCLIVersion()
-        return {
-          available: true,
-          path,
-          version,
-          isMock: isMockMode()
-        }
+        return { available: true, path, version, isMock: false }
+      } else if (process.env.CONTAINER_BOX_MOCK === 'true') {
+        // 의도적 Mock 모드
+        return { available: true, isMock: true }
+      } else {
+        // CLI 미설치 — 자동 폴백
+        return { available: false, error: 'Apple Container CLI not found', isMock: true }
       }
-      return { available: false, error: 'CLI not found', isMock: true }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
       log.error('checkCLI failed', error)

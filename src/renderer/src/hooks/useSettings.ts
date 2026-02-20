@@ -75,7 +75,10 @@ export function useCLIStatus() {
   const checkCLI = useCallback(async () => {
     setLoading(true)
     try {
-      const cliStatus = await window.electronAPI.system.checkCLI()
+      const [cliStatus] = await Promise.all([
+        window.electronAPI.system.checkCLI(),
+        new Promise<void>(resolve => setTimeout(resolve, 600)),
+      ])
       setStatus(cliStatus)
     } catch {
       setStatus({ available: false, error: 'Failed to check CLI' })
