@@ -6,12 +6,24 @@
 
 Container Box is an Electron desktop app that wraps the Apple Container CLI (`container`) in a keyboard-first command-center interface. It targets macOS 26+ on Apple Silicon (arm64) and keeps all container execution in the Electron Main process with typed IPC contracts and whitelist-validated CLI arguments.
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/images/dashboard.png" alt="Dashboard" width="800" />
+  <br><sub><b>Dashboard</b> — live cluster overview with CPU, memory, disk stats and active container cards</sub>
+</p>
+
+<p align="center">
+  <img src="docs/images/containers.png" alt="Containers" width="800" />
+  <br><sub><b>Containers</b> — grid view with status indicators, image tags, and port mappings</sub>
+</p>
+
 ## Features
 
 - **Command Center UI** — 3-pane resizable layout (Sidebar / Main Content / Detail Panel)
 - **Dashboard** — live cluster overview with charts and stats polling
 - **Container management** — list, run/start, inspect, stop, remove with log streaming
-- **Image management** — browse, inspect, pull progress, remove
+- **Image management** — browse, inspect, pull with live progress, build, remove
 - **Volume & Network management** — dedicated views for each resource type
 - **Live terminal** — embedded xterm.js log viewer per container
 - **Command palette** — `⌘K` keyboard-driven search across containers, images, and actions
@@ -68,7 +80,7 @@ npm run test:watch    # Vitest watch mode
 Renderer (React 19)
     ↕  contextBridge  (preload/index.ts)
 Main Process (Node.js)
-    ↕  child_process.spawn
+    ↕  child_process.execFile / node-pty (pull: PTY mode)
 Apple Container CLI (/usr/local/bin/container)
 ```
 
@@ -131,4 +143,6 @@ container system info
 | Language      | TypeScript 5 (strict)                 |
 | Styling       | Tailwind CSS 4 + shadcn/ui (Radix UI) |
 | State         | Zustand 5                             |
+| Charts        | Recharts 3                            |
 | Terminal      | xterm.js 6                            |
+| PTY           | node-pty 1                            |
