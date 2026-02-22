@@ -60,13 +60,43 @@ export function useImages(): UseImagesReturn {
 export function useImagePullProgress() {
   const [progress, setProgress] = useState<{
     image: string
-    status: string
+    phase: string
+    percent: number
     current?: number
     total?: number
+    message: string
+    layerId?: string
   } | null>(null)
 
   useEffect(() => {
     const unsubscribe = window.electronAPI.streams.onPullProgress((data) => {
+      setProgress(data)
+    })
+    return unsubscribe
+  }, [])
+
+  const clearProgress = useCallback(() => {
+    setProgress(null)
+  }, [])
+
+  return { progress, clearProgress }
+}
+
+/** 이미지 빌드 진행 상황 훅 */
+export function useImageBuildProgress() {
+  const [progress, setProgress] = useState<{
+    tag: string
+    phase: string
+    percent: number
+    current?: number
+    total?: number
+    message: string
+    step?: number
+    totalSteps?: number
+  } | null>(null)
+
+  useEffect(() => {
+    const unsubscribe = window.electronAPI.streams.onBuildProgress((data) => {
       setProgress(data)
     })
     return unsubscribe

@@ -5,6 +5,7 @@
 
 import { spawn, execFile, type ChildProcess } from 'child_process'
 import { promisify } from 'util'
+import * as pty from 'node-pty'
 import type {
   ContainerCLIAdapter,
   CLIContainer,
@@ -15,7 +16,7 @@ import type {
   ContainerRunOptions,
   ImageBuildOptions
 } from './adapter.interface'
-import { CLIError, CLIErrorCode } from './types'
+import { CLIError, CLIErrorCode, type PullProgressEvent, type BuildProgressEvent } from './types'
 import {
   parseContainerList,
   parseImageList,
@@ -24,7 +25,10 @@ import {
   parseNetworkInspect,
   parseContainerStats,
   parseErrorCode,
-  parseJSON
+  parseJSON,
+  parsePullProgress,
+  parseBuildProgress,
+  stripAnsi
 } from './parser'
 import {
   validateContainerId,
@@ -271,23 +275,34 @@ export class RealContainerCLI implements ContainerCLIAdapter {
     return result.data!
   }
 
-  async pullImage(ref: string, onProgress?: (data: string) => void): Promise<void> {
+  async pullImage(ref: string, onProgress?: (event: PullProgressEvent) => void): Promise<void> {
     validateImageRef(ref)
-    const proc = this.spawnProcess(['image', 'pull', ref])
+    // PTY로 실행하여 CLI가 TTY를 감지, ANSI 진행률 출력 활성화
+    const cliPath = this.cliPath || CLI_DEFAULT_PATHS[0]
+    const safeEnv = Object.fromEntries(
+      Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined)
+    )
 
     return new Promise((resolve, reject) => {
-      proc.stdout?.on('data', (data: Buffer) => {
-        onProgress?.(data.toString())
+      const ptyProc = pty.spawn(cliPath, ['image', 'pull', ref], {
+        name: 'xterm-256color',
+        cols: 120,
+        rows: 24,
+        cwd: process.env.HOME || '/',
+        env: safeEnv,
       })
-      proc.stderr?.on('data', (data: Buffer) => {
-        onProgress?.(data.toString())
+
+      ptyProc.onData((data: string) => {
+        // ANSI strip → 줄 분리 → 각 줄 파싱
+        const lines = stripAnsi(data).split(/[\r\n]+/).filter(l => l.trim())
+        for (const line of lines) {
+          onProgress?.(parsePullProgress(line))
+        }
       })
-      proc.on('close', (code) => {
-        if (code === 0) resolve()
-        else reject(new CLIError(CLIErrorCode.UNKNOWN, `Pull failed with code ${code}`))
-      })
-      proc.on('error', (err) => {
-        reject(new CLIError(CLIErrorCode.UNKNOWN, err.message))
+
+      ptyProc.onExit(({ exitCode }) => {
+        if (exitCode === 0) resolve()
+        else reject(new CLIError(CLIErrorCode.UNKNOWN, `Pull failed with code ${exitCode}`))
       })
     })
   }
@@ -300,9 +315,10 @@ export class RealContainerCLI implements ContainerCLIAdapter {
     await this.exec(args)
   }
 
-  async buildImage(options: ImageBuildOptions, onProgress?: (data: string) => void): Promise<{ id: string }> {
+  async buildImage(options: ImageBuildOptions, onProgress?: (event: BuildProgressEvent) => void): Promise<{ id: string }> {
     validateImageRef(options.tag)
     const args = ['build', '-t', options.tag]
+    args.push('--progress', 'plain')
     if (options.file) args.push('-f', options.file)
     if (options.noCache) args.push('--no-cache')
     if (options.target) args.push('--target', options.target)
@@ -317,10 +333,10 @@ export class RealContainerCLI implements ContainerCLIAdapter {
       let lastLine = ''
       proc.stdout?.on('data', (data: Buffer) => {
         lastLine = data.toString()
-        onProgress?.(lastLine)
+        onProgress?.(parseBuildProgress(lastLine))
       })
       proc.stderr?.on('data', (data: Buffer) => {
-        onProgress?.(data.toString())
+        onProgress?.(parseBuildProgress(data.toString()))
       })
       proc.on('close', (code) => {
         if (code === 0) {

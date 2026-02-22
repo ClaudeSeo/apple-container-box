@@ -113,9 +113,24 @@ declare global {
         onPullProgress: (
           callback: IPCListener<{
             image: string
-            status: string
+            phase: string
+            percent: number
             current?: number
             total?: number
+            message: string
+            layerId?: string
+          }>
+        ) => Unsubscribe
+        onBuildProgress: (
+          callback: IPCListener<{
+            tag: string
+            phase: string
+            percent: number
+            current?: number
+            total?: number
+            message: string
+            step?: number
+            totalSteps?: number
           }>
         ) => Unsubscribe
         startExec: (containerId: string, command: string[], cols?: number, rows?: number) => Promise<{ sessionId: string }>

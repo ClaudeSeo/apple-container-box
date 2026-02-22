@@ -4,6 +4,7 @@
  */
 
 import type { ChildProcess } from 'child_process'
+import type { PullProgressEvent, BuildProgressEvent } from './types'
 
 /** Container 타입 (Main Process 전용 간소화 버전) */
 export interface CLIContainer {
@@ -129,12 +130,12 @@ export interface ContainerCLIAdapter {
   listImages(): Promise<CLIImage[]>
   pullImage(
     ref: string,
-    onProgress?: (data: string) => void
+    onProgress?: (event: PullProgressEvent) => void
   ): Promise<void>
   deleteImage(id: string, force?: boolean): Promise<void>
   buildImage(
     options: ImageBuildOptions,
-    onProgress?: (data: string) => void
+    onProgress?: (event: BuildProgressEvent) => void
   ): Promise<{ id: string }>
   inspectImage(id: string): Promise<unknown>
 

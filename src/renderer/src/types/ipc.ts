@@ -10,7 +10,7 @@ import type {
   ContainerListOptions,
   ContainerLogsOptions
 } from './container'
-import type { Image, ImagePullOptions, ImagePullProgress, ImageBuildOptions } from './image'
+import type { Image, ImagePullOptions, ImagePullProgress, ImageBuildProgress, ImageBuildOptions } from './image'
 import type { Volume, VolumeCreateOptions, VolumePruneResult } from './volume'
 import type {
   Network,
@@ -87,6 +87,7 @@ export interface IPCOnChannels {
   'container:stats': ContainerStats
   'container:logs:stream': { containerId: string; line: string }
   'image:pull:progress': ImagePullProgress
+  'image:build:progress': ImageBuildProgress
   notification: AppNotification
   'cli:status': CLIStatusEvent
   'settings:changed': AppSettings

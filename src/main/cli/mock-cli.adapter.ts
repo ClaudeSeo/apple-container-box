@@ -15,6 +15,7 @@ import type {
   ContainerRunOptions,
   ImageBuildOptions
 } from './adapter.interface'
+import type { PullProgressEvent, BuildProgressEvent } from './types'
 
 
 /** Mock 컨테이너 데이터 */
@@ -280,11 +281,16 @@ export class MockContainerCLI implements ContainerCLIAdapter {
     return this.images
   }
 
-  async pullImage(ref: string, onProgress?: (data: string) => void): Promise<void> {
-    const steps = ['Pulling from library/' + ref, 'Downloading', 'Extracting', 'Pull complete']
-    for (const step of steps) {
+  async pullImage(ref: string, onProgress?: (event: PullProgressEvent) => void): Promise<void> {
+    const steps: PullProgressEvent[] = [
+      { phase: 'resolving', percent: 5, message: `Pulling from library/${ref}` },
+      { phase: 'downloading', percent: 30, message: 'Downloading layer', current: 15 * 1024 * 1024, total: 50 * 1024 * 1024 },
+      { phase: 'extracting', percent: 70, message: 'Extracting layer' },
+      { phase: 'complete', percent: 100, message: 'Pull complete' },
+    ]
+    for (const event of steps) {
       await this.delay(500)
-      onProgress?.(step)
+      onProgress?.(event)
     }
   }
 
@@ -293,11 +299,16 @@ export class MockContainerCLI implements ContainerCLIAdapter {
     this.images = this.images.filter((i) => !i.id.includes(id))
   }
 
-  async buildImage(_options: ImageBuildOptions, onProgress?: (data: string) => void): Promise<{ id: string }> {
-    const steps = ['Step 1/3: FROM alpine', 'Step 2/3: RUN echo hello', 'Step 3/3: CMD ["sh"]', 'Successfully built']
-    for (const step of steps) {
+  async buildImage(_options: ImageBuildOptions, onProgress?: (event: BuildProgressEvent) => void): Promise<{ id: string }> {
+    const steps: BuildProgressEvent[] = [
+      { phase: 'resolving', step: 1, totalSteps: 3, percent: 33, message: 'Step 1/3: FROM alpine' },
+      { phase: 'extracting', step: 2, totalSteps: 3, percent: 66, message: 'Step 2/3: RUN echo hello' },
+      { phase: 'extracting', step: 3, totalSteps: 3, percent: 99, message: 'Step 3/3: CMD ["sh"]' },
+      { phase: 'complete', step: 3, totalSteps: 3, percent: 100, message: 'Successfully built' },
+    ]
+    for (const event of steps) {
       await this.delay(300)
-      onProgress?.(step)
+      onProgress?.(event)
     }
     return { id: this.generateId() }
   }

@@ -19,11 +19,7 @@ export default function OnboardingScreen({ onDemoMode, onRecheck, checking }: On
       <div className="flex flex-1 items-center justify-center animate-fade-in">
         <div className="flex flex-col items-center max-w-sm w-full px-4">
           {/* 앱 아이콘 */}
-          <div className={cn(
-            'flex items-center justify-center',
-            'h-20 w-20 rounded-full bg-card border border-white/[0.06]',
-            'mb-5'
-          )}>
+          <div className="flex items-center justify-center h-20 w-20 rounded-full bg-card border border-white/[0.06] mb-5">
             <Box className="h-16 w-16 text-foreground" />
           </div>
 

@@ -9,7 +9,9 @@ import {
   type CLIImageJSON,
   type CLIVolumeJSON,
   type CLINetworkJSON,
-  type CLIParseResult
+  type CLIParseResult,
+  type PullProgressEvent,
+  type BuildProgressEvent
 } from './types'
 import type {
   CLIContainer,
@@ -160,7 +162,7 @@ export function parseImageList(output: string): CLIParseResult<CLIImage[]> {
 /**
  * 크기 문자열 파싱 (예: "1.2GB", "500MB", "100kB")
  */
-function parseSizeString(sizeStr: string): number {
+export function parseSizeString(sizeStr: string): number {
   if (!sizeStr) return 0
   const match = sizeStr.match(/^([\d.]+)\s*(B|KB|MB|GB|TB)?$/i)
   if (!match) return 0
@@ -330,4 +332,111 @@ export function parseErrorCode(stderr: string): CLIErrorCode {
     return CLIErrorCode.PERMISSION_DENIED
   }
   return CLIErrorCode.UNKNOWN
+}
+
+/** phase 기반 fallback percent (total을 알 수 없을 때 사용) */
+const PHASE_FALLBACK_PERCENT: Record<string, number> = {
+  resolving: 5,
+  downloading: 30,
+  extracting: 70,
+  verifying: 90,
+  complete: 100,
+  error: 0,
+}
+
+/**
+ * CLI pull 출력 한 줄을 PullProgressEvent로 변환
+ * - 단조 증가 보장은 service layer에서 처리
+ */
+export function parsePullProgress(raw: string): PullProgressEvent {
+  const line = raw.trim()
+  const message = line
+
+  // 레이어 ID 추출: "abc123ef: Downloading ..."
+  const layerMatch = line.match(/^([a-f0-9]{8,})\s*:\s*(.+)/i)
+  const layerId = layerMatch?.[1]
+  const content = layerMatch ? layerMatch[2] : line
+
+  // 에러/실패 키워드 우선 체크
+  if (/error|fail/i.test(content)) {
+    return { phase: 'error', percent: 0, message, layerId }
+  }
+
+  // 완료 키워드
+  if (/complet/i.test(content)) {
+    return { phase: 'complete', percent: 100, message, layerId }
+  }
+
+  // 바이트 진행률: "15.3MB / 50.1MB"
+  const byteMatch = content.match(
+    /([\d.]+)\s*(B|KB|MB|GB)\s*\/\s*([\d.]+)\s*(B|KB|MB|GB)/i
+  )
+  if (byteMatch) {
+    const current = parseSizeString(`${byteMatch[1]}${byteMatch[2]}`)
+    const total = parseSizeString(`${byteMatch[3]}${byteMatch[4]}`)
+    const percent = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0
+
+    // 컨텐츠 키워드로 phase 결정
+    let phase: PullProgressEvent['phase'] = 'downloading'
+    if (/extract/i.test(content)) phase = 'extracting'
+    else if (/verif/i.test(content)) phase = 'verifying'
+
+    return { phase, current, total, percent, message, layerId }
+  }
+
+  // 퍼센트 직접 추출: "63%"
+  const pctMatch = content.match(/(\d+)%/)
+  if (pctMatch) {
+    const percent = Math.min(100, parseInt(pctMatch[1], 10))
+    let phase: PullProgressEvent['phase'] = 'downloading'
+    if (/extract/i.test(content)) phase = 'extracting'
+    else if (/verif/i.test(content)) phase = 'verifying'
+    return { phase, percent, message, layerId }
+  }
+
+  // 키워드 기반 phase 결정
+  let phase: PullProgressEvent['phase'] = 'resolving'
+  if (/download/i.test(content)) phase = 'downloading'
+  else if (/extract/i.test(content)) phase = 'extracting'
+  else if (/verif/i.test(content)) phase = 'verifying'
+  else if (/pull|resolv/i.test(content)) phase = 'resolving'
+
+  const percent = PHASE_FALLBACK_PERCENT[phase] ?? 0
+  return { phase, percent, message, layerId }
+}
+
+/**
+ * CLI build 출력 한 줄을 BuildProgressEvent로 변환
+ * - 단조 증가 보장은 service layer에서 처리
+ */
+export function parseBuildProgress(raw: string): BuildProgressEvent {
+  const line = raw.trim()
+  const message = line
+
+  // 빌드 성공
+  if (/successfully built/i.test(line)) {
+    return { phase: 'complete', percent: 100, message }
+  }
+
+  // 에러/실패
+  if (/error|fail/i.test(line)) {
+    return { phase: 'error', percent: 0, message }
+  }
+
+  // Step N/M 패턴: "Step 2/5 : RUN apt-get install ..."
+  const stepMatch = line.match(/Step\s+(\d+)\s*\/\s*(\d+)/i)
+  if (stepMatch) {
+    const step = parseInt(stepMatch[1], 10)
+    const totalSteps = parseInt(stepMatch[2], 10)
+    const percent = totalSteps > 0 ? Math.round((step / totalSteps) * 100) : 0
+    return { phase: 'extracting', step, totalSteps, percent, message }
+  }
+
+  // fallback: 진행 중 상태로 취급
+  return { phase: 'extracting', percent: 0, message }
+}
+
+/** ANSI escape sequence 제거 */
+export function stripAnsi(str: string): string {
+  return str.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
 }

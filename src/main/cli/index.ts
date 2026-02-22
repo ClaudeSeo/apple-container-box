@@ -18,7 +18,7 @@ export { MockContainerCLI } from './mock-cli.adapter'
 export { createCLIAdapter, getCLIAdapter, resetCLIAdapter, isMockMode } from './cli-factory'
 
 export { CLIError, CLIErrorCode } from './types'
-export type { CLIExecOptions, CLIExecResult, CLIParseResult } from './types'
+export type { CLIExecOptions, CLIExecResult, CLIParseResult, PullProgressEvent, BuildProgressEvent, ProgressPhase } from './types'
 
 export {
   validateName,

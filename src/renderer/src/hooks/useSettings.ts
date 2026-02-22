@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import type { AppSettings } from '@/types'
+import type { AppSettings, IPCInvokeResult } from '@/types'
 
 interface UseSettingsReturn {
   settings: AppSettings | null
@@ -59,13 +59,7 @@ export function useSettings(): UseSettingsReturn {
   }
 }
 
-interface CLIStatus {
-  available: boolean
-  path?: string
-  version?: string
-  error?: string
-  isMock?: boolean
-}
+type CLIStatus = IPCInvokeResult<'system:check-cli'>
 
 /** CLI 상태 훅 */
 export function useCLIStatus() {

@@ -176,18 +176,44 @@ const streamsAPI = {
   onPullProgress: (
     callback: IPCListener<{
       image: string
-      status: string
+      phase: string
+      percent: number
       current?: number
       total?: number
+      message: string
+      layerId?: string
     }>
   ): Unsubscribe => {
     const handler = (
       _event: Electron.IpcRendererEvent,
-      data: { image: string; status: string; current?: number; total?: number }
+      data: { image: string; phase: string; percent: number; current?: number; total?: number; message: string; layerId?: string }
     ) => callback(data)
     ipcRenderer.on('image:pull:progress', handler)
     return () => {
       ipcRenderer.removeListener('image:pull:progress', handler)
+    }
+  },
+
+  /** 이미지 빌드 진행 상황 구독 */
+  onBuildProgress: (
+    callback: IPCListener<{
+      tag: string
+      phase: string
+      percent: number
+      current?: number
+      total?: number
+      message: string
+      step?: number
+      totalSteps?: number
+    }>
+  ): Unsubscribe => {
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      data: { tag: string; phase: string; percent: number; current?: number; total?: number; message: string; step?: number; totalSteps?: number }
+    ) => callback(data)
+    ipcRenderer.on('image:build:progress', handler)
+    return () => {
+      ipcRenderer.removeListener('image:build:progress', handler)
     }
   },
 

@@ -191,3 +191,38 @@ export class CLIError extends Error {
     this.name = 'CLIError'
   }
 }
+
+/** Pull/Build 진행 단계 */
+export type ProgressPhase = 'resolving' | 'downloading' | 'extracting' | 'verifying' | 'complete' | 'error'
+
+/** 이미지 Pull 진행률 이벤트 */
+export interface PullProgressEvent {
+  phase: ProgressPhase
+  /** 현재 바이트 수 */
+  current?: number
+  /** 전체 바이트 수 */
+  total?: number
+  /** 진행률 (0-100) */
+  percent: number
+  /** 원본 메시지 */
+  message: string
+  /** 레이어 ID (있을 경우) */
+  layerId?: string
+}
+
+/** 이미지 Build 진행률 이벤트 */
+export interface BuildProgressEvent {
+  phase: ProgressPhase
+  /** 현재 바이트 수 */
+  current?: number
+  /** 전체 바이트 수 */
+  total?: number
+  /** 진행률 (0-100) */
+  percent: number
+  /** 원본 메시지 */
+  message: string
+  /** 현재 스텝 번호 */
+  step?: number
+  /** 전체 스텝 수 */
+  totalSteps?: number
+}

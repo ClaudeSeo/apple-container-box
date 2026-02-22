@@ -59,9 +59,10 @@ export function ImagePullDialog({ open, onOpenChange }: ImagePullDialogProps) {
     }
   }
 
-  // 진행률 계산
-  const progressPercent =
-    progress?.current && progress?.total ? Math.round((progress.current / progress.total) * 100) : 0
+  // 진행률: 서비스 레이어에서 계산된 percent 사용
+  const progressPercent = progress?.percent ?? 0
+  // resolving/verifying 단계는 진행률이 불확실하므로 indeterminate 애니메이션 적용
+  const isIndeterminate = progress?.phase === 'resolving' || progress?.phase === 'verifying'
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -92,15 +93,18 @@ export function ImagePullDialog({ open, onOpenChange }: ImagePullDialogProps) {
           </div>
 
           {/* 진행 상황 */}
-          {pulling && progress && (
+          {pulling && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{progress.status}</span>
-                {progress.current && progress.total && (
-                  <span className="font-mono">{progressPercent}%</span>
-                )}
+                <span className="text-muted-foreground">
+                  {progress?.message ?? 'Pulling image…'}
+                </span>
+                {progress && <span className="font-mono">{progressPercent}%</span>}
               </div>
-              <Progress value={progressPercent || 0} />
+              {/* progress 없으면 indeterminate, resolving/verifying도 indeterminate */}
+              <div className={(!progress || isIndeterminate) ? 'animate-pulse' : undefined}>
+                <Progress value={progress ? progressPercent : undefined} />
+              </div>
             </div>
           )}
 

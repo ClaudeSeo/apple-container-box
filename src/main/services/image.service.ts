@@ -8,6 +8,8 @@ import {
   createCLIAdapter,
   type ContainerCLIAdapter,
   type ImageBuildOptions,
+  type PullProgressEvent,
+  type BuildProgressEvent,
   validateImageRef
 } from '../cli'
 import { logger } from '../utils/logger'
@@ -18,6 +20,33 @@ const IMAGE_CREATED_AT_CACHE_TTL_MS = 60_000
 interface ImageCreatedAtCacheEntry {
   value: string
   expiresAt: number
+}
+
+/** 단조 증가 보장 + 스로틀링 */
+class ProgressTracker {
+  private lastPercent = 0
+  private lastSentAt = 0
+  private readonly THROTTLE_MS = 100
+
+  /** 단조 증가 보장된 percent 반환 */
+  enforce(percent: number): number {
+    this.lastPercent = Math.max(percent, this.lastPercent)
+    return this.lastPercent
+  }
+
+  /** terminal 이벤트는 항상 true, 일반 이벤트는 throttle 체크 */
+  shouldSend(isTerminal: boolean): boolean {
+    if (isTerminal) return true
+    const now = Date.now()
+    if (now - this.lastSentAt < this.THROTTLE_MS) return false
+    this.lastSentAt = now
+    return true
+  }
+
+  reset(): void {
+    this.lastPercent = 0
+    this.lastSentAt = 0
+  }
 }
 
 class ImageService {
@@ -119,15 +148,22 @@ class ImageService {
 
     const windows = BrowserWindow.getAllWindows()
     const mainWindow = windows[0]
+    const tracker = new ProgressTracker()
 
-    await adapter.pullImage(image, (progress) => {
-      // Renderer에 진행 상황 전송
+    await adapter.pullImage(image, (event: PullProgressEvent) => {
+      const isTerminal = event.phase === 'complete' || event.phase === 'error'
+      const percent = tracker.enforce(event.percent)
+      if (!tracker.shouldSend(isTerminal)) return
+
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('image:pull:progress', {
           image,
-          status: progress,
-          current: undefined,
-          total: undefined
+          phase: event.phase,
+          percent,
+          current: event.current,
+          total: event.total,
+          message: event.message,
+          layerId: event.layerId,
         })
       }
     })
@@ -158,12 +194,21 @@ class ImageService {
 
     const windows = BrowserWindow.getAllWindows()
     const mainWindow = windows[0]
+    const tracker = new ProgressTracker()
 
-    const result = await adapter.buildImage(options, (progress) => {
+    const result = await adapter.buildImage(options, (event: BuildProgressEvent) => {
+      const isTerminal = event.phase === 'complete' || event.phase === 'error'
+      const percent = tracker.enforce(event.percent)
+      if (!tracker.shouldSend(isTerminal)) return
+
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('image:build:progress', {
           tag: options.tag,
-          status: progress
+          phase: event.phase,
+          percent,
+          message: event.message,
+          step: event.step,
+          totalSteps: event.totalSteps,
         })
       }
     })

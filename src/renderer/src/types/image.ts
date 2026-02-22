@@ -44,16 +44,39 @@ export interface ImageBuildOptions {
 }
 
 export interface ImagePullProgress {
-  /** 현재 진행 중인 레이어 ID */
-  layerId?: string
-  /** 진행 상태 */
-  status: 'pulling' | 'downloading' | 'extracting' | 'complete' | 'error'
+  /** 이미지 레퍼런스 */
+  image: string
+  /** 진행 단계 */
+  phase: 'resolving' | 'downloading' | 'extracting' | 'verifying' | 'complete' | 'error'
+  /** 진행률 (0-100) */
+  percent: number
   /** 다운로드된 바이트 */
   current?: number
   /** 전체 바이트 */
   total?: number
-  /** 에러 메시지 */
-  error?: string
+  /** 원본 메시지 */
+  message: string
+  /** 레이어 ID */
+  layerId?: string
+}
+
+export interface ImageBuildProgress {
+  /** 이미지 태그 */
+  tag: string
+  /** 진행 단계 */
+  phase: 'resolving' | 'downloading' | 'extracting' | 'verifying' | 'complete' | 'error'
+  /** 진행률 (0-100) */
+  percent: number
+  /** 현재 바이트 수 */
+  current?: number
+  /** 전체 바이트 수 */
+  total?: number
+  /** 원본 메시지 */
+  message: string
+  /** 현재 스텝 번호 */
+  step?: number
+  /** 전체 스텝 수 */
+  totalSteps?: number
 }
 
 export interface ImagePullOptions {

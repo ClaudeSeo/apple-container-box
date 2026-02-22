@@ -92,7 +92,10 @@ interface StreamsAPI {
   sendExecInput(sessionId: string, data: string): void
   resizeExec(sessionId: string, cols: number, rows: number): void
   onPullProgress(
-    callback: (data: { image: string; status: string; current?: number; total?: number }) => void
+    callback: (data: { image: string; phase: string; percent: number; current?: number; total?: number; message: string; layerId?: string }) => void
+  ): Unsubscribe
+  onBuildProgress(
+    callback: (data: { tag: string; phase: string; percent: number; current?: number; total?: number; message: string; step?: number; totalSteps?: number }) => void
   ): Unsubscribe
   startExec(containerId: string, command: string[], cols?: number, rows?: number): Promise<{ sessionId: string }>
 }
