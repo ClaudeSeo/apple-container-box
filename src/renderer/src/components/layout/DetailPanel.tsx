@@ -46,7 +46,7 @@ export function DetailPanel(): JSX.Element {
   return (
     <aside
       className={cn(
-        'flex h-full w-full flex-col bg-card border-l border-border',
+        'flex h-full w-full flex-col glass-content border-l border-border',
         'animate-in slide-in-from-right duration-200'
       )}
     >

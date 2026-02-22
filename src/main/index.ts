@@ -47,7 +47,10 @@ function createWindow(): void {
     title: APP_DISPLAY_NAME,
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 16, y: 16 },
-    backgroundColor: '#1a1a2e',
+    vibrancy: 'under-window',
+    visualEffectState: 'active',
+    backgroundColor: '#00000000',
+    transparent: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       // 보안 설정

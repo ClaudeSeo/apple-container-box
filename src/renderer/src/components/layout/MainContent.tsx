@@ -20,7 +20,7 @@ export function MainContent(): JSX.Element {
   const { activeView } = useUIStore()
 
   return (
-    <main className="flex flex-1 flex-col overflow-hidden">
+    <main className="flex flex-1 flex-col overflow-hidden pt-10 glass-content">
       <ErrorBoundary>
         <Suspense fallback={<PageLoading />}>
           <PageRenderer view={activeView} />

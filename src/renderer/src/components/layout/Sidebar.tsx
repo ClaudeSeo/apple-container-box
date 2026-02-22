@@ -43,12 +43,15 @@ export function Sidebar(): JSX.Element {
     <TooltipProvider delayDuration={0}>
       <aside
         className={cn(
-          'flex flex-col glass-sidebar transition-all duration-200',
-          sidebarCollapsed ? 'w-16' : 'w-60'
+          'flex flex-col bg-[#1C1C1E]/60 backdrop-blur-2xl border-r border-white/5 transition-all duration-300 pt-11 px-3 pb-3',
+          sidebarCollapsed ? 'w-[68px]' : 'w-[240px]'
         )}
       >
         {/* 메인 네비게이션 */}
-        <nav className="flex-1 space-y-1 p-2">
+        <nav className="flex-1 space-y-0.5">
+          <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-[#8E8E93]">
+            Library
+          </div>
           {NAV_ITEMS.map((item) => (
             <NavButton
               key={item.id}
@@ -61,7 +64,7 @@ export function Sidebar(): JSX.Element {
         </nav>
 
         {/* 하단 네비게이션 */}
-        <div className="space-y-1 p-2">
+        <div className="space-y-0.5 mt-auto pt-3 border-t border-white/5">
           {BOTTOM_NAV_ITEMS.map((item) => (
             <NavButton
               key={item.id}
@@ -75,12 +78,10 @@ export function Sidebar(): JSX.Element {
           {/* 접기/펼치기 버튼 */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
+              <div
                 onClick={toggleSidebar}
                 className={cn(
-                  'w-full justify-start text-muted-foreground hover:text-foreground',
+                  'flex items-center w-full px-2 py-1.5 text-[13px] font-medium rounded-md transition-all duration-150 select-none cursor-default text-[#98989D] hover:bg-white/5 hover:text-white',
                   sidebarCollapsed && 'justify-center px-0'
                 )}
               >
@@ -88,11 +89,11 @@ export function Sidebar(): JSX.Element {
                   <ChevronRight className="h-4 w-4" />
                 ) : (
                   <>
-                    <ChevronLeft className="mr-2 h-4 w-4" />
-                    <span className="text-sm">Collapse</span>
+                    <ChevronLeft className="mr-2.5 h-4 w-4" />
+                    <span>Collapse</span>
                   </>
                 )}
-              </Button>
+              </div>
             </TooltipTrigger>
             {sidebarCollapsed && <TooltipContent side="right">Expand sidebar</TooltipContent>}
           </Tooltip>
@@ -112,20 +113,19 @@ interface NavButtonProps {
 function NavButton({ item, isActive, isCollapsed, onClick }: NavButtonProps): JSX.Element {
   const Icon = item.icon
 
+  const buttonClass = cn(
+    'flex items-center w-full px-2 py-1.5 mb-0.5 text-[13px] font-medium rounded-md transition-all duration-150 select-none cursor-default',
+    isActive
+      ? 'bg-[#0A84FF] text-white shadow-sm'
+      : 'text-[#98989D] hover:bg-white/5 hover:text-white',
+    isCollapsed && 'justify-center px-0'
+  )
+
   const button = (
-    <Button
-      variant={isActive ? 'secondary' : 'ghost'}
-      size="sm"
-      onClick={onClick}
-      className={cn(
-        'w-full justify-start text-muted-foreground hover:text-foreground hover:bg-accent/30',
-        isActive && 'bg-accent/50 text-foreground hover:bg-accent/50',
-        isCollapsed && 'justify-center px-0'
-      )}
-    >
-      <Icon className={cn('h-4 w-4', !isCollapsed && 'mr-2')} />
-      {!isCollapsed && <span className="text-sm">{item.label}</span>}
-    </Button>
+    <div onClick={onClick} className={buttonClass}>
+      <Icon className={cn('h-4 w-4 stroke-[2]', !isCollapsed && 'mr-2.5')} />
+      {!isCollapsed && <span>{item.label}</span>}
+    </div>
   )
 
   if (isCollapsed) {

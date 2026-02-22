@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
 import { formatBytes } from '@/lib/format'
+import { Cpu, MemoryStick as Memory, HardDrive } from 'lucide-react'
+import { StatCard } from './StatCard'
 
 interface SystemResources {
   cpuUsage: number
@@ -30,47 +30,28 @@ export function ResourceOverview(): JSX.Element {
     return () => clearInterval(interval)
   }, [])
 
-  const memoryPercent = resources ? (resources.memoryUsed / resources.memoryTotal) * 100 : 0
-  const diskPercent = resources ? (resources.diskUsed / resources.diskTotal) * 100 : 0
-
   return (
-    <Card className="glass-panel">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">System Resources</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">CPU</span>
-            <span className="font-medium text-foreground">
-              {resources !== null ? `${resources.cpuUsage}%` : '-'}
-            </span>
-          </div>
-          <Progress value={resources?.cpuUsage ?? 0} className="h-2" />
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Memory</span>
-            <span className="font-medium text-foreground">
-              {resources
-                ? `${formatBytes(resources.memoryUsed)} / ${formatBytes(resources.memoryTotal)}`
-                : '-'}
-            </span>
-          </div>
-          <Progress value={memoryPercent} className="h-2" />
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Disk</span>
-            <span className="font-medium text-foreground">
-              {resources
-                ? `${formatBytes(resources.diskUsed)} / ${formatBytes(resources.diskTotal)}`
-                : '-'}
-            </span>
-          </div>
-          <Progress value={diskPercent} className="h-2" />
-        </div>
-      </CardContent>
-    </Card>
+    <>
+      <StatCard
+        icon={Cpu}
+        label="CPU Usage"
+        value={resources !== null ? `${resources.cpuUsage}%` : '-'}
+        variant="blue"
+      />
+      <StatCard
+        icon={Memory}
+        label="Memory"
+        value={resources ? formatBytes(resources.memoryUsed) : '-'}
+        subLabel={resources ? `/ ${formatBytes(resources.memoryTotal)}` : ''}
+        variant="purple"
+      />
+      <StatCard
+        icon={HardDrive}
+        label="Disk Space"
+        value={resources ? formatBytes(resources.diskUsed) : '-'}
+        subLabel={resources ? `/ ${formatBytes(resources.diskTotal)}` : ''}
+        variant="gray"
+      />
+    </>
   )
 }

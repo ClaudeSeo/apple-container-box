@@ -14,25 +14,23 @@ export default function AppLayout(): JSX.Element {
   const { detailPanelVisible } = useUIStore()
 
   return (
-    <div className="flex h-full w-full flex-col bg-background">
-      {/* 타이틀바 (macOS frameless window) */}
+    <div className="flex h-full w-full overflow-hidden bg-transparent relative">
+      {/* 타이틀바 (Overlay) */}
       <TitleBar />
 
-      {/* 메인 영역 (타이틀바 높이만큼 패딩) */}
-      <div className="flex flex-1 overflow-hidden pt-12">
-        {/* 사이드바 */}
-        <Sidebar />
+      {/* 사이드바 */}
+      <Sidebar />
 
-        <ResizablePane
-          rightPanelVisible={detailPanelVisible}
-          rightPanel={<DetailPanel />}
-          defaultRightPanelSize={28}
-          minRightPanelSize={20}
-          maxRightPanelSize={55}
-        >
-          <MainContent />
-        </ResizablePane>
-      </div>
+      {/* 메인 콘텐츠 & 디테일 패널 */}
+      <ResizablePane
+        rightPanelVisible={detailPanelVisible}
+        rightPanel={<DetailPanel />}
+        defaultRightPanelSize={28}
+        minRightPanelSize={20}
+        maxRightPanelSize={55}
+      >
+        <MainContent />
+      </ResizablePane>
 
       {/* Command Palette (Cmd+K) */}
       <CommandPalette />

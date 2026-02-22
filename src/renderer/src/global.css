@@ -25,27 +25,43 @@
     --ring: 211 100% 50%;
     --radius: 0.75rem;
 
-    /* Glass material tokens (solid values) */
-    --glass-bg: #171717;
-    --glass-bg-hover: #1c1c1c;
-    --glass-bg-active: #222222;
-    --glass-border: #1c1c1c;
-    --glass-border-strong: #2a2a2a;
-    --glass-shadow: none;
-    --glass-shadow-lg: none;
+    /* macOS System Colors (Dark Mode) */
+    --system-blue: #0A84FF;
+    --system-gray-1: #1C1C1E;
+    --system-gray-2: #2C2C2E;
+    --system-gray-3: #3A3A3C;
+    --system-gray-4: #48484A;
+    --system-gray-5: #636366;
+    --system-gray-6: #8E8E93;
+    
+    /* Semantic Colors */
+    --bg-sidebar: rgba(28, 28, 30, 0.6); /* Translucent Sidebar */
+    --bg-content: rgba(20, 20, 20, 0.95); /* Mostly Opaque Content */
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.12);
+
+    /* Glass material tokens (Refined) */
+    --glass-bg: var(--system-gray-1);
+    --glass-bg-hover: var(--system-gray-2);
+    --glass-bg-active: var(--system-gray-3);
+    --glass-border: var(--border-subtle);
+    --glass-border-strong: var(--border-strong);
+    --glass-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --glass-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.3);
+    --glass-content-bg: var(--bg-content);
 
     /* 커스텀 앱 색상 변수 */
-    --background-hex: #121212;
-    --background-secondary: #171717;
-    --foreground-hex: #f2f2f2;
-    --border-hex: #1c1c1c;
+    --background-hex: #000000;
+    --background-secondary: #1c1c1e;
+    --foreground-hex: #ffffff;
+    --border-hex: #3a3a3c;
 
     /* 컨테이너 상태 색상 - Apple System Colors */
-    --status-running: #34C759;
+    --status-running: #30D158;
     --status-stopped: #8E8E93;
-    --status-error: #FF3B30;
-    --status-paused: #FF9500;
-    --status-restarting: #007AFF;
+    --status-error: #FF453A;
+    --status-paused: #FF9F0A;
+    --status-restarting: #0A84FF;
   }
 }
 
@@ -55,10 +71,13 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-transparent text-foreground font-sans antialiased;
     /* macOS 드래그 영역을 위한 기본 설정 */
     -webkit-user-select: none;
     user-select: none;
+    /* SF Pro 폰트 스무딩 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* 텍스트 선택 허용 영역 */
@@ -111,34 +130,72 @@
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
 
-  /* Glass material utilities (solid) */
+  /* Glass material utilities (translucent) */
   .glass-panel {
-    background: var(--glass-bg);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius);
+    background: rgba(30, 30, 30, 0.5);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
   .glass-panel:hover {
-    background: var(--glass-bg-hover);
-  }
-  .glass-panel:active {
-    background: var(--glass-bg-active);
+    background: rgba(40, 40, 40, 0.5);
+    border-color: var(--border-strong);
   }
 
   .glass-surface {
-    background: hsl(var(--card));
+    background: rgba(44, 44, 46, 0.4); /* system-gray-2 with opacity */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
   }
 
   .glass-sidebar {
-    background: hsl(var(--card));
+    background: var(--bg-sidebar);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-right: 1px solid var(--border-subtle);
   }
 
   .glass-titlebar {
-    background: hsl(var(--background));
+    background: transparent;
   }
 
   .glass-overlay {
-    background: hsl(var(--background));
-    border: 1px solid var(--glass-border);
+    background: rgba(20, 20, 20, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .glass-content {
+    background: var(--bg-content);
+    /* Content area should be readable, less blur needed if opaque, but consistent texture */
+  }
+
+  /* macOS Style Utilities */
+  .mac-sidebar-item {
+    @apply flex items-center w-full px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200;
+    color: var(--system-gray-6); /* Inactive text */
+  }
+  .mac-sidebar-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: white;
+  }
+  .mac-sidebar-item.active {
+    background-color: var(--system-blue);
+    color: white;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+  
+  .mac-input {
+    @apply bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50;
+  }
+
+  .mac-card {
+    @apply rounded-xl border border-white/5 bg-[#1C1C1E] shadow-sm transition-all hover:bg-[#2C2C2E] hover:border-white/10;
   }
 }
 
