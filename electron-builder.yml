@@ -9,15 +9,18 @@ directories:
 mac:
   category: public.app-category.developer-tools
   icon: resources/icon.icns
+  hardenedRuntime: true
+  gatekeeperAssess: false
   target:
     - target: dmg
       arch: [arm64]
     - target: zip
       arch: [arm64]
-  entitlements: null
-  entitlementsInherit: null
+  entitlements: resources/entitlements.mac.plist
+  entitlementsInherit: resources/entitlements.mac.inherit.plist
 
 dmg:
+  sign: true
   background: null
   window:
     width: 540
@@ -32,7 +35,7 @@ extraResources:
     to: resources/tray-icon.png
 
 asarUnpack:
-  - "node_modules/node-pty/**"
+  - 'node_modules/node-pty/**'
 
 files:
   - '!**/.vscode/*'
