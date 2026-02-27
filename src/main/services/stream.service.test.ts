@@ -254,4 +254,35 @@ describe('streamService', () => {
       vi.useRealTimers()
     }
   })
+
+  it('runs first stats poll immediately on start', async () => {
+    vi.useFakeTimers()
+    try {
+      const getContainerStats = vi.fn().mockResolvedValue({
+        cpuPercent: 1,
+        memoryUsage: 2,
+        memoryLimit: 3,
+        networkRx: 4,
+        networkTx: 5,
+        timestamp: Date.now()
+      })
+
+      createCLIAdapterMock.mockResolvedValue({
+        getContainerStats
+      })
+
+      const webContents = createWebContentsMock()
+      pollingService.startStatsPolling('c-immediate', webContents as never)
+
+      await Promise.resolve()
+      await Promise.resolve()
+
+      expect(getContainerStats).toHaveBeenCalledTimes(1)
+      await vi.advanceTimersByTimeAsync(POLLING_INTERVAL_STATS - 1)
+      expect(getContainerStats).toHaveBeenCalledTimes(1)
+    } finally {
+      pollingService.cleanup()
+      vi.useRealTimers()
+    }
+  })
 })

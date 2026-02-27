@@ -42,15 +42,15 @@ class PollingService {
 
     log.info('Starting stats polling', { containerId, interval: POLLING_INTERVAL_STATS })
 
-    // 즉시 한 번 실행
-    void this.pollStats(containerId, webContents)
-
     // 주기적 폴링
     const timer = setInterval(() => {
       void this.pollStats(containerId, webContents)
     }, POLLING_INTERVAL_STATS)
 
     this.statsSubscriptions.set(containerId, { webContents, timer, inFlight: false })
+
+    // 즉시 한 번 실행
+    void this.pollStats(containerId, webContents)
   }
 
   /**

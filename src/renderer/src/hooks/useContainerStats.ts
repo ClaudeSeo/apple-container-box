@@ -100,9 +100,14 @@ export function useContainerStats(
   // 컨테이너 변경 시 폴링 시작/중지
   useEffect(() => {
     if (containerId && enabled) {
+      setCurrentStats(null)
       setHistory([])
       prevNetworkRef.current = null
       startPolling()
+    } else {
+      setCurrentStats(null)
+      setHistory([])
+      prevNetworkRef.current = null
     }
     return () => {
       // stopPolling()은 isPolling 상태에 의존 → stale closure 방지를 위해 직접 cleanup
