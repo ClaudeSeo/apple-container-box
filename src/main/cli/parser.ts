@@ -438,5 +438,6 @@ export function parseBuildProgress(raw: string): BuildProgressEvent {
 
 /** ANSI escape sequence 제거 */
 export function stripAnsi(str: string): string {
-  return str.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+  const ansiPattern = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*[a-zA-Z]`, 'g')
+  return str.replace(ansiPattern, '')
 }
