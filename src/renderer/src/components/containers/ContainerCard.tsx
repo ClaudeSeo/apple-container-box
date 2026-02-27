@@ -1,7 +1,6 @@
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores'
-import { Card, CardContent } from '@/components/ui/card'
-import { StatusBadge, StatusDot } from './StatusBadge'
+import { StatusDot } from './StatusBadge'
 import { ContainerActions } from './ContainerActions'
 import { formatUptime, truncateId } from '@/lib/format'
 import type { Container } from '@/types'

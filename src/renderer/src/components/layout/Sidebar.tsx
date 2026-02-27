@@ -12,7 +12,6 @@ import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore, type ActiveView } from '@/stores'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Button } from '@/components/ui/button'
 
 interface NavItem {
   id: ActiveView

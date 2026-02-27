@@ -6,19 +6,24 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
-  defs,
-  linearGradient,
-  stop
+  ResponsiveContainer
 } from 'recharts'
 import { useContainerStats, calculateMemoryPercent } from '@/hooks/useContainerStats'
 import { formatBytes, formatPercent } from '@/lib/format'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Cpu, MemoryStick as Memory, ArrowDownCircle, ArrowUpCircle, Activity } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ContainerStatsProps {
   containerId: string
+}
+
+interface ChartDataPoint {
+  index: number
+  cpu: number
+  memory: number
+  memoryBytes: number
 }
 
 /**
@@ -116,7 +121,7 @@ export function ContainerStats({ containerId }: ContainerStatsProps): JSX.Elemen
 }
 
 interface StatCardProps {
-  icon: any
+  icon: LucideIcon
   title: string
   value: string
   subValue?: string
@@ -151,9 +156,9 @@ function StatCard({ icon: Icon, title, value, subValue, subLabel, variant }: Sta
 
 interface ChartCardProps {
   title: string
-  icon: any
-  data: any[]
-  dataKey: string
+  icon: LucideIcon
+  data: ChartDataPoint[]
+  dataKey: 'cpu' | 'memory'
   color: string
   gradientId: string
   isWarmingUp: boolean
